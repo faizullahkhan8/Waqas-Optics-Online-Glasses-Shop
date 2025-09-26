@@ -1,0 +1,28 @@
+{
+    "name": "backend",
+    "version": "1.0.0",
+    "description": "The backend is a RESTful API service that supports user authentication, product & catalog management, shopping cart operations, order processing, payment integration, and administrative features. It provides secure endpoints for users to register, login, browse and filter eyewear products, manage their cart, place orders, and view order history. For admins, it offers CRUD operations on products, categories, users, and orders. Core concerns include data modeling (users, products, orders, payments), authorization, validation, JSON-based communication, and scalability.",
+    "main": "index.js",
+    "scripts": {
+        "dev": "nodemon index.js"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "bcryptjs": "^3.0.2",
+        "cloudinary": "^2.7.0",
+        "cookie-parser": "^1.4.7",
+        "cors": "^2.8.5",
+        "dotenv": "^17.2.2",
+        "express": "^5.1.0",
+        "express-rate-limit": "^8.1.0",
+        "express-validator": "^7.2.1",
+        "helmet": "^8.1.0",
+        "jsonwebtoken": "^9.0.2",
+        "mongoose": "^8.18.2",
+        "morgan": "^1.10.1",
+        "multer": "^2.0.2",
+        "nodemon": "^3.1.10",
+        "stripe": "^18.5.0"
+    }
+}
