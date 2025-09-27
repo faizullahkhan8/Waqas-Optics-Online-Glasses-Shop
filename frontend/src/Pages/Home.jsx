@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { SAMPLE_PRODUCTS } from "../Utils/MockData";
+import { useFeaturedProducts } from "../hooks/useProducts";
 import ProductGrid from "../components/Product/ProductGrid";
 import { Helmet } from "react-helmet";
 import Container from "../components/UI/Container";
@@ -7,6 +8,15 @@ import { Link } from "react-router-dom";
 
 export default function HomePage() {
     useEffect(() => window.scrollTo(0, 0), []);
+
+    // Fetch featured products with fallback to mock data
+    const {
+        data: featuredProductsData,
+        isLoading,
+        error,
+    } = useFeaturedProducts();
+    const featuredProducts =
+        featuredProductsData?.products || SAMPLE_PRODUCTS.slice(0, 8);
     return (
         <main>
             <Helmet>
@@ -84,7 +94,27 @@ export default function HomePage() {
                         </p>
                     </div>
                     <div className="mt-12">
-                        <ProductGrid products={SAMPLE_PRODUCTS} />
+                        {/* Loading State */}
+                        {isLoading && (
+                            <div className="flex justify-center py-12">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                            </div>
+                        )}
+
+                        {/* Error State */}
+                        {error && !isLoading && (
+                            <div className="text-center py-12 text-gray-600">
+                                <p>
+                                    Failed to load featured products. Showing
+                                    sample collection.
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Products Grid */}
+                        {!isLoading && (
+                            <ProductGrid products={featuredProducts} />
+                        )}
                     </div>
                 </Container>
             </section>

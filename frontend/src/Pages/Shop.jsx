@@ -2,6 +2,11 @@ import { useState, useMemo } from "react";
 import { SAMPLE_PRODUCTS } from "../Utils/MockData";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet";
+import {
+    useProducts,
+    useSearchProducts,
+    useProductsByCategory,
+} from "../hooks/useProducts";
 import Container from "../components/UI/Container";
 import ProductGrid from "../components/Product/ProductGrid";
 import Button from "../components/UI/Button";
@@ -29,16 +34,62 @@ export default function ShopPage() {
         navigate({ search: params.toString() });
     };
 
+    // React Query hooks for fetching products
+    const productsQuery = useProducts({
+        category: category !== "all" ? category : undefined,
+        gender: filters.gender !== "all" ? filters.gender : undefined,
+        color: filters.color !== "all" ? filters.color : undefined,
+        material: filters.material !== "all" ? filters.material : undefined,
+        minPrice:
+            filters.priceRange !== "all"
+                ? filters.priceRange.split("-")[0]
+                : undefined,
+        maxPrice:
+            filters.priceRange !== "all"
+                ? filters.priceRange.split("-")[1]
+                : undefined,
+        sort,
+        page: 1,
+        limit: 50,
+    });
+
+    const searchQuery = useSearchProducts(q, {
+        category: category !== "all" ? category : undefined,
+        gender: filters.gender !== "all" ? filters.gender : undefined,
+        color: filters.color !== "all" ? filters.color : undefined,
+        material: filters.material !== "all" ? filters.material : undefined,
+        minPrice:
+            filters.priceRange !== "all"
+                ? filters.priceRange.split("-")[0]
+                : undefined,
+        maxPrice:
+            filters.priceRange !== "all"
+                ? filters.priceRange.split("-")[1]
+                : undefined,
+        sort,
+    });
+
+    // Fallback to MockData if API is not available
     const filteredProducts = useMemo(() => {
+        // Use API data if available, otherwise fallback to mock data
+        const apiProducts = q
+            ? searchQuery.data?.products
+            : productsQuery.data?.products;
+
+        if (apiProducts) {
+            return apiProducts;
+        }
+
+        // Fallback to mock data with client-side filtering
         let res = SAMPLE_PRODUCTS.slice();
 
         // Text search
         if (q) {
-            const searchQuery = q.toLowerCase();
+            const searchQueryLower = q.toLowerCase();
             res = res.filter(
                 (p) =>
-                    p.title.toLowerCase().includes(searchQuery) ||
-                    p.description.toLowerCase().includes(searchQuery)
+                    p.title.toLowerCase().includes(searchQueryLower) ||
+                    p.description.toLowerCase().includes(searchQueryLower)
             );
         }
 
@@ -85,7 +136,11 @@ export default function ShopPage() {
         }
 
         return res;
-    }, [q, category, filters, sort]);
+    }, [q, category, filters, sort, productsQuery.data, searchQuery.data]);
+
+    // Loading and error states
+    const isLoading = q ? searchQuery.isLoading : productsQuery.isLoading;
+    const error = q ? searchQuery.error : productsQuery.error;
 
     return (
         <main>
@@ -743,7 +798,53 @@ export default function ShopPage() {
                                     </div>
                                 </div>
 
-                                <ProductGrid products={filteredProducts} />
+                                {/* Loading State */}
+                                {isLoading && (
+                                    <div className="flex justify-center items-center py-20">
+                                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+                                    </div>
+                                )}
+
+                                {/* Error State */}
+                                {error && !isLoading && (
+                                    <div className="text-center py-20">
+                                        <div className="text-red-500 mb-4">
+                                            <svg
+                                                className="w-16 h-16 mx-auto mb-4"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                />
+                                            </svg>
+                                            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                                                Failed to load products
+                                            </h3>
+                                            <p className="text-gray-600 mb-4">
+                                                {error?.message ||
+                                                    "Something went wrong while fetching products"}
+                                            </p>
+                                            <Button
+                                                onClick={() =>
+                                                    window.location.reload()
+                                                }
+                                                className="bg-gray-900 text-white px-6 py-2 rounded-md hover:bg-gray-800"
+                                            >
+                                                Try Again
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Products Grid */}
+                                {!isLoading && !error && (
+                                    <ProductGrid products={filteredProducts} />
+                                )}
                             </div>
                         </div>
                     </div>

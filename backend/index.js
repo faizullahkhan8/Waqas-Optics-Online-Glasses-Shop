@@ -42,6 +42,7 @@ app.use("/api/v1/auth", require("./routes/auth"));
 app.use("/api/v1/products", require("./routes/product"));
 app.use("/api/v1/cart", require("./routes/cart"));
 app.use("/api/v1/orders", require("./routes/order"));
+app.use("/api/v1/admin", require("./routes/admin"));
 app.use("/api/v1/additional", require("./routes/additional"));
 
 // Error Middleware

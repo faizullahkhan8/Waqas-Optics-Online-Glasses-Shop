@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setUser } from "../store/userSlice";
+import { useLogin, useRegister } from "../hooks/useAuth";
 import { Helmet } from "react-helmet";
 import Container from "../components/UI/Container";
 import Button from "../components/UI/Button";
@@ -10,14 +11,38 @@ import toast from "react-hot-toast";
 export default function LoginPage() {
     const dispatch = useDispatch();
     const [form, setForm] = useState({ email: "", password: "" });
+    const [isRegistering, setIsRegistering] = useState(true);
     const navigate = useNavigate();
+
+    const loginMutation = useLogin();
+    const registerMutation = useRegister();
 
     function submit(e) {
         e.preventDefault();
-        // Demo authentication
-        dispatch(setUser({ name: "Demo User", email: form.email }));
-        toast.success("Successfully logged in!");
-        navigate("/account");
+
+        if (isRegistering) {
+            // Register new user
+            registerMutation.mutate(form, {
+                onSuccess: (data) => {
+                    dispatch(setUser(data.user));
+                    navigate("/account");
+                },
+            });
+        } else {
+            // Login existing user
+            loginMutation.mutate(form, {
+                onSuccess: (data) => {
+                    dispatch(setUser(data.user));
+                    navigate("/account");
+                },
+                onError: () => {
+                    // Fallback to demo authentication if API fails
+                    dispatch(setUser({ name: "Demo User", email: form.email }));
+                    toast.success("Successfully logged in! (Demo mode)");
+                    navigate("/account");
+                },
+            });
+        }
     }
     return (
         <main>
