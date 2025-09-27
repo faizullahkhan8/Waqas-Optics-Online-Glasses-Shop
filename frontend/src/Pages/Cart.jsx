@@ -5,12 +5,64 @@ import { Helmet } from "react-helmet";
 import Container from "../components/UI/Container";
 import Button from "../components/UI/Button";
 import toast from "react-hot-toast";
+import { useEffect } from "react";
+import { cartApi } from "../services/cartService";
 
 export default function CartPage() {
     const dispatch = useDispatch();
     const cart = useSelector((state) => state.cart);
     const navigate = useNavigate();
     const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+
+    // Fetch cart from backend on mount
+    useEffect(() => {
+        async function fetchCart() {
+            try {
+                const data = await cartApi.getCart();
+                // You may need to adapt this if your cartSlice expects a certain format
+                dispatch({
+                    type: "cart/replaceCart",
+                    payload: data.items || data,
+                });
+            } catch {
+                toast.error("Failed to load cart");
+            }
+        }
+        fetchCart();
+    }, [dispatch]);
+
+    // Update quantity in backend
+    async function handleUpdateQty(id, qty) {
+        try {
+            await cartApi.updateCartItem(id, qty);
+            dispatch(updateQty({ id, qty }));
+            toast.success("Updated quantity");
+        } catch {
+            toast.error("Failed to update quantity");
+        }
+    }
+
+    // Remove item in backend
+    async function handleRemove(id, title) {
+        try {
+            await cartApi.removeFromCart(id);
+            dispatch(removeFromCart(id));
+            toast.success(`${title} removed from cart`);
+        } catch {
+            toast.error("Failed to remove item");
+        }
+    }
+
+    // Clear cart in backend
+    async function handleClearCart() {
+        try {
+            await cartApi.clearCart();
+            dispatch(clearCart());
+            toast.success("Cart cleared");
+        } catch {
+            toast.error("Failed to clear cart");
+        }
+    }
 
     return (
         <main>
@@ -82,16 +134,12 @@ export default function CartPage() {
                                                         </p>
                                                     </div>
                                                     <Button
-                                                        onClick={() => {
-                                                            dispatch(
-                                                                removeFromCart(
-                                                                    item.id
-                                                                )
-                                                            );
-                                                            toast.success(
-                                                                `${item.title} removed from cart`
-                                                            );
-                                                        }}
+                                                        onClick={() =>
+                                                            handleRemove(
+                                                                item.id,
+                                                                item.title
+                                                            )
+                                                        }
                                                         className="text-gray-400 hover:text-red-500 bg-transparent shadow-none p-1"
                                                     >
                                                         ×
@@ -114,21 +162,11 @@ export default function CartPage() {
                                                                                 .target
                                                                                 .value
                                                                         );
-                                                                    if (
-                                                                        qty > 0
-                                                                    ) {
-                                                                        dispatch(
-                                                                            updateQty(
-                                                                                {
-                                                                                    id: item.id,
-                                                                                    qty,
-                                                                                }
-                                                                            )
+                                                                    if (qty > 0)
+                                                                        handleUpdateQty(
+                                                                            item.id,
+                                                                            qty
                                                                         );
-                                                                        toast.success(
-                                                                            `Updated ${item.title} quantity`
-                                                                        );
-                                                                    }
                                                                 }}
                                                                 className="appearance-none bg-gray-100 border-0 rounded-lg py-2 pl-4 pr-8 text-gray-900 focus:ring-2 focus:ring-gray-900"
                                                             >
@@ -223,10 +261,7 @@ export default function CartPage() {
                                         Proceed to Checkout
                                     </Button>
                                     <Button
-                                        onClick={() => {
-                                            dispatch(clearCart());
-                                            toast.success("Cart cleared");
-                                        }}
+                                        onClick={handleClearCart}
                                         className="w-full px-8 py-4 bg-gray-100 text-gray-900 rounded-lg hover:bg-gray-200 transition-colors font-medium"
                                     >
                                         Clear Cart

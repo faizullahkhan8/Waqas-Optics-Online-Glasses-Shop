@@ -1,8 +1,8 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const { check } = require("express-validator");
+import { check } from "express-validator";
 
-const {
+import {
     getWishlist,
     addToWishlist,
     removeFromWishlist,
@@ -11,9 +11,9 @@ const {
     getNotifications,
     markNotificationAsRead,
     clearAllNotifications,
-} = require("../controllers/additionalController");
+} from "../controllers/additionalController.js";
 
-const { isAuthenticatedUser, authorizeRoles } = require("../middleware/auth");
+import { isAuthenticatedUser, authorizeRoles } from "../middleware/auth.js";
 
 // Validation middleware
 const couponValidation = [
@@ -66,4 +66,4 @@ router
     .route("/notifications/:id")
     .put(isAuthenticatedUser, markNotificationAsRead);
 
-module.exports = router;
+export default router;

@@ -1,14 +1,14 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const {
+import {
     getDashboardStats,
     getAnalytics,
     getRecentOrders,
     getTopProducts,
     getSalesData,
-} = require("../controllers/adminController");
-const { isAuthenticatedUser, authorizeRoles } = require("../middleware/auth");
-const { getAllUsers } = require("../controllers/adminController");
+    getAllUsers,
+} from "../controllers/adminController.js";
+import { isAuthenticatedUser, authorizeRoles } from "../middleware/auth.js";
 
 // Protect all admin routes: require authentication and admin role
 router.use(isAuthenticatedUser, authorizeRoles("admin"));
@@ -25,4 +25,4 @@ router.get("/analytics/overview", getAnalytics);
 router.get("/analytics/sales-data", getSalesData);
 router.get("/analytics/top-products", getTopProducts);
 
-module.exports = router;
+export default router;

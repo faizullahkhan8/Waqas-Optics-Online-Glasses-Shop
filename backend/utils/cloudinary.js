@@ -1,4 +1,4 @@
-const cloudinary = require("cloudinary").v2;
+import { v2 as cloudinary } from "cloudinary";
 
 // Configure Cloudinary
 cloudinary.config({
@@ -8,7 +8,7 @@ cloudinary.config({
 });
 
 // Upload file to Cloudinary
-exports.uploadFile = async (file, folder = "products") => {
+export const uploadFile = async (file, folder = "products") => {
     try {
         const result = await cloudinary.uploader.upload(file, {
             folder: folder,
@@ -25,10 +25,16 @@ exports.uploadFile = async (file, folder = "products") => {
 };
 
 // Delete file from Cloudinary
-exports.deleteFile = async (public_id) => {
+export const deleteFile = async (public_id) => {
     try {
         await cloudinary.uploader.destroy(public_id);
     } catch (error) {
         throw new Error("Error deleting file from Cloudinary");
     }
+};
+
+// Default export with all functions
+export default {
+    uploadFile,
+    deleteFile,
 };

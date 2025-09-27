@@ -1,8 +1,8 @@
-const express = require("express");
-const { check } = require("express-validator");
+import express from "express";
+import { check } from "express-validator";
 const router = express.Router();
 
-const {
+import {
     registerUser,
     loginUser,
     logout,
@@ -10,9 +10,9 @@ const {
     updatePassword,
     updateProfile,
     updateAddress,
-} = require("../controllers/authController");
+} from "../controllers/authController.js";
 
-const { isAuthenticatedUser } = require("../middleware/auth");
+import { isAuthenticatedUser } from "../middleware/auth.js";
 
 // test route
 router.get("/test", (req, res) => {
@@ -32,4 +32,4 @@ router.put("/password/update", isAuthenticatedUser, updatePassword);
 router.put("/me/update", isAuthenticatedUser, updateProfile);
 router.post("/address", isAuthenticatedUser, updateAddress);
 
-module.exports = router;
+export default router;

@@ -1,11 +1,11 @@
-const Wishlist = require("../models/wishlist");
-const Coupon = require("../models/coupon");
-const Notification = require("../models/notification");
-const Cart = require("../models/cart");
-const ErrorHandler = require("../utils/errorHandler");
+import Wishlist from "../models/wishlist.js";
+import Coupon from "../models/coupon.js";
+import Notification from "../models/notification.js";
+import Cart from "../models/cart.js";
+import ErrorHandler from "../utils/errorHandler.js";
 
 // Wishlist Controllers
-exports.getWishlist = async (req, res, next) => {
+export const getWishlist = async (req, res, next) => {
     try {
         let wishlist = await Wishlist.findOne({ user: req.user._id }).populate(
             "items.product",
@@ -28,7 +28,7 @@ exports.getWishlist = async (req, res, next) => {
     }
 };
 
-exports.addToWishlist = async (req, res, next) => {
+export const addToWishlist = async (req, res, next) => {
     try {
         const { productId } = req.body;
 
@@ -59,7 +59,7 @@ exports.addToWishlist = async (req, res, next) => {
     }
 };
 
-exports.removeFromWishlist = async (req, res, next) => {
+export const removeFromWishlist = async (req, res, next) => {
     try {
         const wishlist = await Wishlist.findOne({ user: req.user._id });
 
@@ -83,7 +83,7 @@ exports.removeFromWishlist = async (req, res, next) => {
 };
 
 // Coupon Controllers
-exports.createCoupon = async (req, res, next) => {
+export const createCoupon = async (req, res, next) => {
     try {
         req.body.createdBy = req.user._id;
         const coupon = await Coupon.create(req.body);
@@ -97,7 +97,7 @@ exports.createCoupon = async (req, res, next) => {
     }
 };
 
-exports.validateCoupon = async (req, res, next) => {
+export const validateCoupon = async (req, res, next) => {
     try {
         const { code } = req.body;
         const cart = await Cart.findOne({ user: req.user._id });
@@ -154,7 +154,7 @@ exports.validateCoupon = async (req, res, next) => {
 };
 
 // Notification Controllers
-exports.getNotifications = async (req, res, next) => {
+export const getNotifications = async (req, res, next) => {
     try {
         const notifications = await Notification.find({ user: req.user._id })
             .sort("-createdAt")
@@ -169,7 +169,7 @@ exports.getNotifications = async (req, res, next) => {
     }
 };
 
-exports.markNotificationAsRead = async (req, res, next) => {
+export const markNotificationAsRead = async (req, res, next) => {
     try {
         const notification = await Notification.findOne({
             _id: req.params.id,
@@ -192,7 +192,7 @@ exports.markNotificationAsRead = async (req, res, next) => {
     }
 };
 
-exports.clearAllNotifications = async (req, res, next) => {
+export const clearAllNotifications = async (req, res, next) => {
     try {
         await Notification.updateMany({ user: req.user._id }, { isRead: true });
 

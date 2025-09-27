@@ -1,12 +1,7 @@
 import { useState, useMemo } from "react";
-import { SAMPLE_PRODUCTS } from "../Utils/MockData";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet";
-import {
-    useProducts,
-    useSearchProducts,
-    useProductsByCategory,
-} from "../hooks/useProducts";
+import { useProducts, useSearchProducts } from "../hooks/useProducts";
 import Container from "../components/UI/Container";
 import ProductGrid from "../components/Product/ProductGrid";
 import Button from "../components/UI/Button";
@@ -34,24 +29,37 @@ export default function ShopPage() {
         navigate({ search: params.toString() });
     };
 
+    // Determine if filters are unchanged
+    const areFiltersDefault =
+        category === "all" &&
+        filters.gender === "all" &&
+        filters.color === "all" &&
+        filters.material === "all" &&
+        filters.priceRange === "all";
+
     // React Query hooks for fetching products
-    const productsQuery = useProducts({
-        category: category !== "all" ? category : undefined,
-        gender: filters.gender !== "all" ? filters.gender : undefined,
-        color: filters.color !== "all" ? filters.color : undefined,
-        material: filters.material !== "all" ? filters.material : undefined,
-        minPrice:
-            filters.priceRange !== "all"
-                ? filters.priceRange.split("-")[0]
-                : undefined,
-        maxPrice:
-            filters.priceRange !== "all"
-                ? filters.priceRange.split("-")[1]
-                : undefined,
-        sort,
-        page: 1,
-        limit: 50,
-    });
+    const productsQuery = useProducts(
+        areFiltersDefault
+            ? {} // Fetch all products if filters are default
+            : {
+                  category: category !== "all" ? category : undefined,
+                  gender: filters.gender !== "all" ? filters.gender : undefined,
+                  color: filters.color !== "all" ? filters.color : undefined,
+                  material:
+                      filters.material !== "all" ? filters.material : undefined,
+                  minPrice:
+                      filters.priceRange !== "all"
+                          ? filters.priceRange.split("-")[0]
+                          : undefined,
+                  maxPrice:
+                      filters.priceRange !== "all"
+                          ? filters.priceRange.split("-")[1]
+                          : undefined,
+                  sort,
+                  page: 1,
+                  limit: 50,
+              }
+    );
 
     const searchQuery = useSearchProducts(q, {
         category: category !== "all" ? category : undefined,
@@ -69,74 +77,12 @@ export default function ShopPage() {
         sort,
     });
 
-    // Fallback to MockData if API is not available
+    // Use only API data for products
     const filteredProducts = useMemo(() => {
-        // Use API data if available, otherwise fallback to mock data
-        const apiProducts = q
-            ? searchQuery.data?.products
-            : productsQuery.data?.products;
-
-        if (apiProducts) {
-            return apiProducts;
-        }
-
-        // Fallback to mock data with client-side filtering
-        let res = SAMPLE_PRODUCTS.slice();
-
-        // Text search
-        if (q) {
-            const searchQueryLower = q.toLowerCase();
-            res = res.filter(
-                (p) =>
-                    p.title.toLowerCase().includes(searchQueryLower) ||
-                    p.description.toLowerCase().includes(searchQueryLower)
-            );
-        }
-
-        // Category filter
-        if (category !== "all") {
-            res = res.filter(
-                (p) => p.category.toLowerCase() === category.toLowerCase()
-            );
-        }
-
-        // Apply filters
-        if (filters.gender !== "all") {
-            res = res.filter((p) => p.gender === filters.gender);
-        }
-        if (filters.color !== "all") {
-            res = res.filter((p) => p.color === filters.color);
-        }
-        if (filters.material !== "all") {
-            res = res.filter((p) => p.material === filters.material);
-        }
-        if (filters.priceRange !== "all") {
-            const [min, max] = filters.priceRange.split("-").map(Number);
-            res = res.filter((p) => p.price >= min && p.price <= max);
-        }
-
-        // Apply sorting
-        switch (sort) {
-            case "price_asc":
-                res.sort((a, b) => a.price - b.price);
-                break;
-            case "price_desc":
-                res.sort((a, b) => b.price - a.price);
-                break;
-            case "popularity":
-                res.sort((a, b) => b.popularity - a.popularity);
-                break;
-            case "newest":
-                res.sort(
-                    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-                );
-                break;
-            default:
-                break;
-        }
-
-        return res;
-    }, [q, category, filters, sort, productsQuery.data, searchQuery.data]);
+        return q
+            ? searchQuery.data?.products || []
+            : productsQuery.data?.products || [];
+    }, [q, productsQuery.data, searchQuery.data]);
 
     // Loading and error states
     const isLoading = q ? searchQuery.isLoading : productsQuery.isLoading;

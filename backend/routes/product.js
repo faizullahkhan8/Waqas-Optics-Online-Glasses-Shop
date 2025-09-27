@@ -1,8 +1,8 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const { check } = require("express-validator");
+import { check } from "express-validator";
 
-const {
+import {
     getProducts,
     createProduct,
     getSingleProduct,
@@ -11,10 +11,10 @@ const {
     createProductReview,
     getProductReviews,
     deleteReview,
-} = require("../controllers/productController");
+} from "../controllers/productController.js";
 
-const { isAuthenticatedUser, authorizeRoles } = require("../middleware/auth");
-const upload = require("../middleware/upload");
+import { isAuthenticatedUser, authorizeRoles } from "../middleware/auth.js";
+import upload from "../middleware/upload.js";
 
 // Validation middleware
 const productValidation = [
@@ -36,8 +36,8 @@ const reviewValidation = [
 ];
 
 // Public routes
-router.route("/products").get(getProducts);
-router.route("/product/:id").get(getSingleProduct);
+router.route("/").get(getProducts);
+router.route("/:id").get(getSingleProduct);
 router.route("/reviews").get(getProductReviews);
 
 // Protected routes
@@ -48,7 +48,7 @@ router
 
 // Admin routes
 router
-    .route("/admin/product/new")
+    .route("/admin/new")
     .post(
         isAuthenticatedUser,
         authorizeRoles("admin"),
@@ -58,7 +58,7 @@ router
     );
 
 router
-    .route("/admin/product/:id")
+    .route("/admin/:id")
     .put(
         isAuthenticatedUser,
         authorizeRoles("admin"),
@@ -67,4 +67,4 @@ router
     )
     .delete(isAuthenticatedUser, authorizeRoles("admin"), deleteProduct);
 
-module.exports = router;
+export default router;

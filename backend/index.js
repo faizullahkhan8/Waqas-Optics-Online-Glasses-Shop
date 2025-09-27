@@ -1,24 +1,27 @@
-const express = require("express");
-const dotenv = require("dotenv");
-const cors = require("cors");
-const cookieParser = require("cookie-parser");
-const helmet = require("helmet");
-const morgan = require("morgan");
-const rateLimit = require("express-rate-limit");
+import express from "express";
+import dotenv from "dotenv";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import helmet from "helmet";
+import morgan from "morgan";
+import rateLimit from "express-rate-limit";
+import session from "express-session";
+import MongoStore from "connect-mongo";
 
 // routes
-const authRoutes = require("./routes/auth");
-const productRoutes = require("./routes/product");
-const cartRoutes = require("./routes/cart");
-const orderRoutes = require("./routes/order");
-const adminRoutes = require("./routes/admin");
-const additionalRoutes = require("./routes/additional");
+import authRoutes from "./routes/auth.js";
+import productRoutes from "./routes/product.js";
+import cartRoutes from "./routes/cart.js";
+import orderRoutes from "./routes/order.js";
+import adminRoutes from "./routes/admin.js";
+import additionalRoutes from "./routes/additional.js";
+import paymentRoutes from "./routes/payment.js";
 
 // Load environment variables
 dotenv.config();
 
 // Connect Database
-const connectDatabase = require("./config/database");
+import connectDatabase from "./config/database.js";
 connectDatabase();
 
 const app = express();
@@ -30,6 +33,24 @@ app.use(cookieParser());
 app.use(helmet());
 app.use(morgan("dev"));
 
+// Express session setup
+app.use(
+    session({
+        secret: process.env.SESSION_SECRET || "supersecretkey",
+        resave: false,
+        saveUninitialized: false,
+        cookie: {
+            httpOnly: true,
+            maxAge: 1000 * 60 * 60 * 24, // 1 day
+            sameSite: "lax",
+        },
+        store: MongoStore.create({
+            mongoUrl: process.env.MONGODB_URI,
+            collectionName: "sessions",
+        }),
+    })
+);
+
 // Setup CORS
 app.use(
     cors({
@@ -40,7 +61,7 @@ app.use(
     })
 );
 
-// Rate limiting
+// // Rate limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100, // limit each IP to 100 requests per windowMs
@@ -54,9 +75,10 @@ app.use("/api/v1/cart", cartRoutes);
 app.use("/api/v1/orders", orderRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/additional", additionalRoutes);
+app.use("/api/v1/payment", paymentRoutes);
 
 // Error Middleware
-const errorMiddleware = require("./middleware/error");
+import errorMiddleware from "./middleware/error.js";
 app.use(errorMiddleware);
 
 const PORT = process.env.PORT || 5000;

@@ -1,9 +1,9 @@
-const Cart = require("../models/cart");
-const Product = require("../models/product");
-const ErrorHandler = require("../utils/errorHandler");
+import Cart from "../models/cart.js";
+import Product from "../models/product.js";
+import ErrorHandler from "../utils/errorHandler.js";
 
 // Get or create cart => /api/v1/cart
-exports.getCart = async (req, res, next) => {
+export const getCart = async (req, res, next) => {
     try {
         let cart = await Cart.findOne({ user: req.user._id }).populate(
             "items.product",
@@ -41,7 +41,7 @@ exports.getCart = async (req, res, next) => {
 };
 
 // Add item to cart => /api/v1/cart/add
-exports.addToCart = async (req, res, next) => {
+export const addToCart = async (req, res, next) => {
     try {
         const { productId, quantity = 1 } = req.body;
 
@@ -91,7 +91,7 @@ exports.addToCart = async (req, res, next) => {
 };
 
 // Update cart item quantity => /api/v1/cart/update
-exports.updateCartItem = async (req, res, next) => {
+export const updateCartItem = async (req, res, next) => {
     try {
         const { productId, quantity } = req.body;
 
@@ -137,7 +137,7 @@ exports.updateCartItem = async (req, res, next) => {
 };
 
 // Remove item from cart => /api/v1/cart/remove
-exports.removeFromCart = async (req, res, next) => {
+export const removeFromCart = async (req, res, next) => {
     try {
         const { productId } = req.body;
 
@@ -162,7 +162,7 @@ exports.removeFromCart = async (req, res, next) => {
 };
 
 // Clear cart => /api/v1/cart/clear
-exports.clearCart = async (req, res, next) => {
+export const clearCart = async (req, res, next) => {
     try {
         const cart = await Cart.findOne({ user: req.user._id });
         if (!cart) {

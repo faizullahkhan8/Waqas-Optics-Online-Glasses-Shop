@@ -1,16 +1,16 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const { check } = require("express-validator");
+import { check } from "express-validator";
 
-const {
+import {
     getCart,
     addToCart,
     updateCartItem,
     removeFromCart,
     clearCart,
-} = require("../controllers/cartController");
+} from "../controllers/cartController.js";
 
-const { isAuthenticatedUser } = require("../middleware/auth");
+import { isAuthenticatedUser } from "../middleware/auth.js";
 
 // Validation middleware
 const cartItemValidation = [
@@ -25,14 +25,14 @@ const productIdValidation = [
 // All routes are protected
 router.use(isAuthenticatedUser);
 
-router.route("/cart").get(getCart);
+router.route("/").get(getCart);
 
-router.route("/cart/add").post(cartItemValidation, addToCart);
+router.route("/add").post(cartItemValidation, addToCart);
 
-router.route("/cart/update").put(cartItemValidation, updateCartItem);
+router.route("/update").put(cartItemValidation, updateCartItem);
 
-router.route("/cart/remove").delete(productIdValidation, removeFromCart);
+router.route("/remove").delete(productIdValidation, removeFromCart);
 
-router.route("/cart/clear").delete(clearCart);
+router.route("/clear").delete(clearCart);
 
-module.exports = router;
+export default router;

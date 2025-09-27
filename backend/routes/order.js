@@ -1,17 +1,16 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const { check } = require("express-validator");
+import { check } from "express-validator";
 
-const {
+import {
     createOrder,
     getSingleOrder,
     myOrders,
     getAllOrders,
     updateOrder,
-    createPaymentIntent,
-} = require("../controllers/orderController");
+} from "../controllers/orderController.js";
 
-const { isAuthenticatedUser, authorizeRoles } = require("../middleware/auth");
+import { isAuthenticatedUser, authorizeRoles } from "../middleware/auth.js";
 
 // Validation middleware
 const orderValidation = [
@@ -34,15 +33,9 @@ const orderValidation = [
 ];
 
 // Protected routes
-router
-    .route("/order/new")
-    .post(isAuthenticatedUser, orderValidation, createOrder);
-
-router.route("/order/:id").get(isAuthenticatedUser, getSingleOrder);
-
-router.route("/orders/me").get(isAuthenticatedUser, myOrders);
-
-router.route("/payment/intent").post(isAuthenticatedUser, createPaymentIntent);
+router.route("/new").post(isAuthenticatedUser, orderValidation, createOrder);
+router.route("/:id").get(isAuthenticatedUser, getSingleOrder);
+router.route("/me").get(isAuthenticatedUser, myOrders);
 
 // Admin routes
 router
@@ -53,4 +46,4 @@ router
     .route("/admin/order/:id")
     .put(isAuthenticatedUser, authorizeRoles("admin"), updateOrder);
 
-module.exports = router;
+export default router;

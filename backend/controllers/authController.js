@@ -1,13 +1,11 @@
-const User = require("../models/user");
-const ErrorHandler = require("../utils/errorHandler");
-const sendToken = require("../utils/jwtToken");
-const crypto = require("crypto");
+import User from "../models/user.js";
+import ErrorHandler from "../utils/errorHandler.js";
+import crypto from "crypto";
 
 // Register a user => /api/v1/auth/register
-exports.registerUser = async (req, res, next) => {
+export const registerUser = async (req, res, next) => {
     try {
         const { name, email, password, phone } = req.body;
-
         const user = await User.create({
             name,
             email,
@@ -15,54 +13,45 @@ exports.registerUser = async (req, res, next) => {
             phone,
             addresses: [],
         });
-
-        sendToken(user, 201, res);
+        req.session.userId = user._id;
+        res.status(201).json({ success: true, user });
     } catch (error) {
         next(error);
     }
 };
 
 // Login user => /api/v1/auth/login
-exports.loginUser = async (req, res, next) => {
+export const loginUser = async (req, res, next) => {
     try {
         const { email, password } = req.body;
-
-        // Check if email and password is entered by user
         if (!email || !password) {
             return next(new ErrorHandler("Please enter email & password", 400));
         }
-
-        // Finding user in database
         const user = await User.findOne({ email }).select("+password");
-
         if (!user) {
             return next(new ErrorHandler("Invalid Email or Password", 401));
         }
-
-        // Check if password is correct
         const isPasswordMatched = await user.comparePassword(password);
-
         if (!isPasswordMatched) {
             return next(new ErrorHandler("Invalid Email or Password", 401));
         }
-
-        sendToken(user, 200, res);
+        req.session.userId = user._id;
+        res.status(200).json({ success: true, user });
     } catch (error) {
         next(error);
     }
 };
 
 // Logout user => /api/v1/auth/logout
-exports.logout = async (req, res, next) => {
+export const logout = async (req, res, next) => {
     try {
-        res.cookie("token", null, {
-            expires: new Date(Date.now()),
-            httpOnly: true,
-        });
-
-        res.status(200).json({
-            success: true,
-            message: "Logged out successfully",
+        req.session.destroy((err) => {
+            if (err) return next(err);
+            res.clearCookie("connect.sid");
+            res.status(200).json({
+                success: true,
+                message: "Logged out successfully",
+            });
         });
     } catch (error) {
         next(error);
@@ -70,67 +59,62 @@ exports.logout = async (req, res, next) => {
 };
 
 // Get currently logged in user details => /api/v1/auth/me
-exports.getUserProfile = async (req, res, next) => {
+export const getUserProfile = async (req, res, next) => {
     try {
-        const user = await User.findById(req.user.id);
-
-        res.status(200).json({
-            success: true,
-            user,
-        });
+        const user = await User.findById(req.session.userId);
+        if (!user) {
+            return next(new ErrorHandler("User not found", 404));
+        }
+        res.status(200).json({ success: true, user });
     } catch (error) {
         next(error);
     }
 };
 
 // Update / Change password => /api/v1/auth/password/update
-exports.updatePassword = async (req, res, next) => {
+export const updatePassword = async (req, res, next) => {
     try {
-        const user = await User.findById(req.user.id).select("+password");
-
-        // Check previous user password
+        const user = await User.findById(req.session.userId).select(
+            "+password"
+        );
         const isMatched = await user.comparePassword(req.body.oldPassword);
         if (!isMatched) {
             return next(new ErrorHandler("Old password is incorrect", 400));
         }
-
         user.password = req.body.password;
         await user.save();
-
-        sendToken(user, 200, res);
+        res.status(200).json({ success: true, user });
     } catch (error) {
         next(error);
     }
 };
 
 // Update user profile => /api/v1/auth/me/update
-exports.updateProfile = async (req, res, next) => {
+export const updateProfile = async (req, res, next) => {
     try {
         const newUserData = {
             name: req.body.name,
             email: req.body.email,
             phone: req.body.phone,
         };
-
-        const user = await User.findByIdAndUpdate(req.user.id, newUserData, {
-            new: true,
-            runValidators: true,
-        });
-
-        res.status(200).json({
-            success: true,
-            user,
-        });
+        const user = await User.findByIdAndUpdate(
+            req.session.userId,
+            newUserData,
+            {
+                new: true,
+                runValidators: true,
+            }
+        );
+        res.status(200).json({ success: true, user });
     } catch (error) {
         next(error);
     }
 };
 
 // Add/Update address => /api/v1/auth/address
-exports.updateAddress = async (req, res, next) => {
+export const updateAddress = async (req, res, next) => {
     try {
-        const user = await User.findById(req.user.id);
-
+        const user = await User.findById(req.session.userId);
         const newAddress = {
             line1: req.body.line1,
             line2: req.body.line2,
@@ -140,12 +124,10 @@ exports.updateAddress = async (req, res, next) => {
             country: req.body.country,
             isDefault: req.body.isDefault || false,
         };
-
         // If address is set as default, remove default from other addresses
         if (newAddress.isDefault) {
             user.addresses.forEach((addr) => (addr.isDefault = false));
         }
-
         // If updating existing address
         if (req.body.addressId) {
             const addressIndex = user.addresses.findIndex(
@@ -158,13 +140,8 @@ exports.updateAddress = async (req, res, next) => {
             // Adding new address
             user.addresses.push(newAddress);
         }
-
         await user.save();
-
-        res.status(200).json({
-            success: true,
-            addresses: user.addresses,
-        });
+        res.status(200).json({ success: true, addresses: user.addresses });
     } catch (error) {
         next(error);
     }

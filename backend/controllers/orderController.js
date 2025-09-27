@@ -1,11 +1,9 @@
-const Order = require("../models/order");
-const Cart = require("../models/cart");
-const Product = require("../models/product");
-const ErrorHandler = require("../utils/errorHandler");
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+import Order from "../models/order.js";
+import Product from "../models/product.js";
+import ErrorHandler from "../utils/errorHandler.js";
 
 // Create new order => /api/v1/order/new
-exports.createOrder = async (req, res, next) => {
+export const createOrder = async (req, res, next) => {
     try {
         const { shippingInfo, paymentInfo } = req.body;
 
@@ -62,7 +60,7 @@ exports.createOrder = async (req, res, next) => {
 };
 
 // Get single order => /api/v1/order/:id
-exports.getSingleOrder = async (req, res, next) => {
+export const getSingleOrder = async (req, res, next) => {
     try {
         const order = await Order.findById(req.params.id).populate(
             "user",
@@ -93,7 +91,7 @@ exports.getSingleOrder = async (req, res, next) => {
 };
 
 // Get logged in user orders => /api/v1/orders/me
-exports.myOrders = async (req, res, next) => {
+export const myOrders = async (req, res, next) => {
     try {
         const orders = await Order.find({ user: req.user._id });
 
@@ -107,7 +105,7 @@ exports.myOrders = async (req, res, next) => {
 };
 
 // Admin: Get all orders => /api/v1/admin/orders
-exports.getAllOrders = async (req, res, next) => {
+export const getAllOrders = async (req, res, next) => {
     try {
         const orders = await Order.find().populate("user", "name email");
 
@@ -127,7 +125,7 @@ exports.getAllOrders = async (req, res, next) => {
 };
 
 // Admin: Update order status => /api/v1/admin/order/:id
-exports.updateOrder = async (req, res, next) => {
+export const updateOrder = async (req, res, next) => {
     try {
         const order = await Order.findById(req.params.id);
 
@@ -155,36 +153,6 @@ exports.updateOrder = async (req, res, next) => {
         res.status(200).json({
             success: true,
             order,
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
-// Create Stripe payment intent => /api/v1/payment/intent
-exports.createPaymentIntent = async (req, res, next) => {
-    try {
-        const cart = await Cart.findOne({ user: req.user._id });
-        if (!cart || cart.items.length === 0) {
-            return next(new ErrorHandler("Cart is empty", 400));
-        }
-
-        const itemsPrice = cart.totalPrice;
-        const taxPrice = itemsPrice * 0.15;
-        const shippingPrice = itemsPrice > 200 ? 0 : 25;
-        const totalAmount = Math.round(
-            (itemsPrice + taxPrice + shippingPrice) * 100
-        ); // Convert to cents
-
-        const paymentIntent = await stripe.paymentIntents.create({
-            amount: totalAmount,
-            currency: "usd",
-            metadata: { integration_check: "accept_a_payment" },
-        });
-
-        res.status(200).json({
-            success: true,
-            client_secret: paymentIntent.client_secret,
         });
     } catch (error) {
         next(error);

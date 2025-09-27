@@ -28,13 +28,13 @@ const Login = () => {
                 password: formData.password,
             });
 
-            // Fetch user profile (backend sets cookie token)
+            // Fetch user profile (backend sets session cookie)
             const profileRes = await api.get("/auth/me");
             const user = profileRes.data?.user;
 
             if (!user) throw new Error("Unable to fetch user profile");
 
-            dispatch(setCredentials({ user, token: null }));
+            dispatch(setCredentials({ user }));
             toast.success("Login successful!");
             navigate("/dashboard");
         } catch (error) {

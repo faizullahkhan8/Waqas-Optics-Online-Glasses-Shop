@@ -1,10 +1,10 @@
-const Product = require("../models/product");
-const ErrorHandler = require("../utils/errorHandler");
-const cloudinary = require("../utils/cloudinary");
-const APIFeatures = require("../utils/apiFeatures");
+import Product from "../models/product.js";
+import ErrorHandler from "../utils/errorHandler.js";
+import cloudinary from "../utils/cloudinary.js";
+import APIFeatures from "../utils/apiFeatures.js";
 
 // Create new product => /api/v1/admin/product/new
-exports.createProduct = async (req, res, next) => {
+export const createProduct = async (req, res, next) => {
     try {
         req.body.createdBy = req.user.id;
 
@@ -30,14 +30,15 @@ exports.createProduct = async (req, res, next) => {
 };
 
 // Get all products => /api/v1/products
-exports.getProducts = async (req, res, next) => {
+export const getProducts = async (req, res, next) => {
     try {
         const resPerPage = 12;
         const productsCount = await Product.countDocuments();
 
-        const apiFeatures = new APIFeatures(Product.find(), req.query)
+        const apiFeatures = new APIFeatures(Product.find({}), req.query)
             .search()
-            .filter();
+            .filter()
+            .sort(); // Added sort functionality
 
         let products = await apiFeatures.query;
         const filteredProductsCount = products.length;
@@ -58,7 +59,7 @@ exports.getProducts = async (req, res, next) => {
 };
 
 // Get single product details => /api/v1/product/:id
-exports.getSingleProduct = async (req, res, next) => {
+export const getSingleProduct = async (req, res, next) => {
     try {
         const product = await Product.findById(req.params.id);
 
@@ -76,7 +77,7 @@ exports.getSingleProduct = async (req, res, next) => {
 };
 
 // Update Product => /api/v1/admin/product/:id
-exports.updateProduct = async (req, res, next) => {
+export const updateProduct = async (req, res, next) => {
     try {
         let product = await Product.findById(req.params.id);
 
@@ -115,7 +116,7 @@ exports.updateProduct = async (req, res, next) => {
 };
 
 // Delete Product => /api/v1/admin/product/:id
-exports.deleteProduct = async (req, res, next) => {
+export const deleteProduct = async (req, res, next) => {
     try {
         const product = await Product.findById(req.params.id);
 
@@ -140,7 +141,7 @@ exports.deleteProduct = async (req, res, next) => {
 };
 
 // Create/Update product review => /api/v1/review
-exports.createProductReview = async (req, res, next) => {
+export const createProductReview = async (req, res, next) => {
     try {
         const { rating, comment, productId } = req.body;
 
@@ -184,7 +185,7 @@ exports.createProductReview = async (req, res, next) => {
 };
 
 // Get Product Reviews => /api/v1/reviews
-exports.getProductReviews = async (req, res, next) => {
+export const getProductReviews = async (req, res, next) => {
     try {
         const product = await Product.findById(req.query.id);
 
@@ -198,7 +199,7 @@ exports.getProductReviews = async (req, res, next) => {
 };
 
 // Delete Product Review => /api/v1/reviews
-exports.deleteReview = async (req, res, next) => {
+export const deleteReview = async (req, res, next) => {
     try {
         const product = await Product.findById(req.query.productId);
 
@@ -229,6 +230,20 @@ exports.deleteReview = async (req, res, next) => {
 
         res.status(200).json({
             success: true,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Get featured products => /api/v1/products/featured
+export const getFeaturedProducts = async (req, res, next) => {
+    try {
+        const featuredProducts = await Product.find({});
+
+        res.status(200).json({
+            success: true,
+            featuredProducts,
         });
     } catch (error) {
         next(error);

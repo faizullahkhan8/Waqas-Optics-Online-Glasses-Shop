@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { SAMPLE_PRODUCTS } from "../Utils/MockData";
 import { useFeaturedProducts } from "../hooks/useProducts";
 import ProductGrid from "../components/Product/ProductGrid";
 import { Helmet } from "react-helmet";
@@ -9,14 +8,13 @@ import { Link } from "react-router-dom";
 export default function HomePage() {
     useEffect(() => window.scrollTo(0, 0), []);
 
-    // Fetch featured products with fallback to mock data
+    // Fetch featured products from backend only
     const {
         data: featuredProductsData,
         isLoading,
         error,
     } = useFeaturedProducts();
-    const featuredProducts =
-        featuredProductsData?.products || SAMPLE_PRODUCTS.slice(0, 8);
+    const featuredProducts = featuredProductsData?.products || [];
     return (
         <main>
             <Helmet>
@@ -104,15 +102,12 @@ export default function HomePage() {
                         {/* Error State */}
                         {error && !isLoading && (
                             <div className="text-center py-12 text-gray-600">
-                                <p>
-                                    Failed to load featured products. Showing
-                                    sample collection.
-                                </p>
+                                <p>Failed to load featured products.</p>
                             </div>
                         )}
 
                         {/* Products Grid */}
-                        {!isLoading && (
+                        {!isLoading && !error && (
                             <ProductGrid products={featuredProducts} />
                         )}
                     </div>

@@ -1,4 +1,4 @@
-const Notification = require("../models/notification");
+import Notification from "../models/notification.js";
 
 // Create a new notification
 const createNotification = async (userId, data) => {
@@ -54,7 +54,7 @@ const createPromotionNotification = async (userId, coupon) => {
     });
 };
 
-module.exports = {
+export {
     createNotification,
     createOrderNotification,
     createProductNotification,

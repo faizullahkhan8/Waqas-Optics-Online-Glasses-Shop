@@ -5,6 +5,8 @@ import { clearCart } from "../store/cartSlice";
 import { Helmet } from "react-helmet";
 import Container from "../components/UI/Container";
 import Button from "../components/UI/Button";
+import StripeCheckout from "../components/StripeCheckout";
+import { orderApi } from "../services/orderService";
 
 export default function CheckoutPage() {
     const dispatch = useDispatch();
@@ -16,12 +18,10 @@ export default function CheckoutPage() {
         address: "",
         city: "",
         postal: "",
-        cardNumber: "",
-        expiry: "",
-        cvc: "",
     });
     const [errors, setErrors] = useState({});
     const [payment, setPayment] = useState("cod");
+    const [stripeError, setStripeError] = useState(null);
 
     function validate() {
         const e = {};
@@ -29,26 +29,53 @@ export default function CheckoutPage() {
         if (!form.email || !/\S+@\S+/.test(form.email))
             e.email = "Valid email required";
         if (!form.address) e.address = "Address required";
-        if (payment === "card") {
-            if (!form.cardNumber) e.cardNumber = "Card number required";
-            if (!form.expiry) e.expiry = "Expiry required";
-            if (!form.cvc) e.cvc = "CVC required";
-        }
         setErrors(e);
         return Object.keys(e).length === 0;
     }
-    function placeOrder() {
+
+    async function placeOrder() {
         if (!validate()) return;
-        // Dummy order placement -> in production call backend
-        const order = {
-            id: `ORD-${Date.now()}`,
-            items: cart,
-            total: cart.reduce((s, i) => s + i.price * i.qty, 0),
-            customer: form,
-            payment,
-        };
-        dispatch(clearCart());
-        navigate(`/thank-you?order=${order.id}`);
+        if (payment === "card") {
+            // Stripe payment handled in StripeCheckout
+            return;
+        }
+        // Send order to backend for COD
+        try {
+            const orderData = {
+                items: cart,
+                total: cart.reduce((s, i) => s + i.price * i.qty, 0),
+                customer: form,
+                payment,
+            };
+            const res = await orderApi.createOrder(orderData);
+            dispatch(clearCart());
+            navigate(`/thank-you?order=${res.data.orderId || res.data._id}`);
+        } catch (err) {
+            setErrors({
+                submit: err?.response?.data?.message || "Order failed",
+            });
+        }
+    }
+
+    async function handleStripeSuccess(paymentIntent) {
+        // Send order to backend with Stripe payment info
+        try {
+            const orderData = {
+                items: cart,
+                total: cart.reduce((s, i) => s + i.price * i.qty, 0),
+                customer: form,
+                payment: "card",
+                stripePaymentId: paymentIntent.id,
+            };
+            const res = await orderApi.createOrder(orderData);
+            dispatch(clearCart());
+            navigate(`/thank-you?order=${res.data.orderId || res.data._id}`);
+        } catch (err) {
+            setStripeError(err?.response?.data?.message || "Order failed");
+        }
+    }
+    function handleStripeError(error) {
+        setStripeError(error?.message || "Payment failed");
     }
 
     return (
@@ -222,75 +249,30 @@ export default function CheckoutPage() {
                                         </div>
                                         {payment === "card" && (
                                             <div className="space-y-4">
-                                                <div>
-                                                    <input
-                                                        placeholder="Card number"
-                                                        value={form.cardNumber}
-                                                        onChange={(e) =>
-                                                            setForm((f) => ({
-                                                                ...f,
-                                                                cardNumber:
-                                                                    e.target
-                                                                        .value,
-                                                            }))
-                                                        }
-                                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition-colors"
-                                                    />
-                                                    {errors.cardNumber && (
-                                                        <div className="mt-2 text-red-500 text-sm">
-                                                            {errors.cardNumber}
-                                                        </div>
+                                                <StripeCheckout
+                                                    amount={cart.reduce(
+                                                        (s, i) =>
+                                                            s + i.price * i.qty,
+                                                        0
                                                     )}
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div>
-                                                        <input
-                                                            placeholder="MM/YY"
-                                                            value={form.expiry}
-                                                            onChange={(e) =>
-                                                                setForm(
-                                                                    (f) => ({
-                                                                        ...f,
-                                                                        expiry: e
-                                                                            .target
-                                                                            .value,
-                                                                    })
-                                                                )
-                                                            }
-                                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition-colors"
-                                                        />
-                                                        {errors.expiry && (
-                                                            <div className="mt-2 text-red-500 text-sm">
-                                                                {errors.expiry}
-                                                            </div>
-                                                        )}
+                                                    onSuccess={
+                                                        handleStripeSuccess
+                                                    }
+                                                    onError={handleStripeError}
+                                                />
+                                                {stripeError && (
+                                                    <div className="mt-2 text-red-500 text-sm">
+                                                        {stripeError}
                                                     </div>
-                                                    <div>
-                                                        <input
-                                                            placeholder="CVC"
-                                                            value={form.cvc}
-                                                            onChange={(e) =>
-                                                                setForm(
-                                                                    (f) => ({
-                                                                        ...f,
-                                                                        cvc: e
-                                                                            .target
-                                                                            .value,
-                                                                    })
-                                                                )
-                                                            }
-                                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition-colors"
-                                                        />
-                                                        {errors.cvc && (
-                                                            <div className="mt-2 text-red-500 text-sm">
-                                                                {errors.cvc}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
+                                                )}
                                             </div>
                                         )}
                                     </div>
+                                    {errors.submit && (
+                                        <div className="mt-2 text-red-500 text-sm">
+                                            {errors.submit}
+                                        </div>
+                                    )}
                                 </form>
                             </div>
 
@@ -373,15 +355,29 @@ export default function CheckoutPage() {
                                     </div>
 
                                     <div className="mt-8">
-                                        <Button
-                                            className="w-full px-8 py-4 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                placeOrder();
-                                            }}
-                                        >
-                                            Complete Order
-                                        </Button>
+                                        {payment === "cod" && (
+                                            <Button
+                                                className="w-full px-8 py-4 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    placeOrder();
+                                                }}
+                                            >
+                                                Complete Order
+                                            </Button>
+                                        )}
+                                        {payment === "card" && (
+                                            <Button
+                                                className="w-full px-8 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    // StripeCheckout handles payment
+                                                }}
+                                                disabled
+                                            >
+                                                Pay with Card
+                                            </Button>
+                                        )}
                                         <p className="mt-4 text-sm text-center text-gray-500">
                                             By placing your order, you agree to
                                             our Terms of Service and Privacy

@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const orderSchema = new mongoose.Schema({
     shippingInfo: {
@@ -70,6 +70,15 @@ const orderSchema = new mongoose.Schema({
             required: true,
         },
     },
+    // Stripe payment fields
+    stripePaymentId: {
+        type: String,
+    },
+    paymentStatus: {
+        type: String,
+        enum: ["pending", "paid", "failed", "canceled", "refunded"],
+        default: "pending",
+    },
     paidAt: {
         type: Date,
         required: true,
@@ -107,4 +116,4 @@ const orderSchema = new mongoose.Schema({
     },
 });
 
-module.exports = mongoose.model("Order", orderSchema);
+export default mongoose.model("Order", orderSchema);

@@ -10,6 +10,7 @@ import { PersistGate } from "redux-persist/integration/react";
 import { Toaster } from "react-hot-toast";
 import "./index.css";
 import { routes } from "./routes";
+import App from "./App";
 
 // Create router instance
 const router = createBrowserRouter(routes);
@@ -23,7 +24,9 @@ createRoot(document.getElementById("root")).render(
                         position="top-right"
                         toastOptions={{ duration: 1000 }}
                     />
-                    <RouterProvider router={router} />
+                    <App>
+                        <RouterProvider router={router} />
+                    </App>
                     <ReactQueryDevtools initialIsOpen={false} />
                 </PersistGate>
             </Provider>

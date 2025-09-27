@@ -1,12 +1,12 @@
-const User = require("../models/user");
-const Product = require("../models/product");
-const Order = require("../models/order");
-const ErrorHandler = require("../utils/errorHandler");
+import User from "../models/user.js";
+import Product from "../models/product.js";
+import Order from "../models/order.js";
+import ErrorHandler from "../utils/errorHandler.js";
 
 // @desc    Get dashboard statistics
 // @route   GET /api/v1/admin/dashboard/stats
 // @access  Private/Admin
-exports.getDashboardStats = async (req, res, next) => {
+export const getDashboardStats = async (req, res, next) => {
     try {
         // Get counts
         const totalProducts = await Product.countDocuments();
@@ -70,7 +70,7 @@ exports.getDashboardStats = async (req, res, next) => {
 // @desc    Get recent orders for dashboard
 // @route   GET /api/v1/admin/dashboard/recent-orders
 // @access  Private/Admin
-exports.getRecentOrders = async (req, res, next) => {
+export const getRecentOrders = async (req, res, next) => {
     try {
         const orders = await Order.find()
             .populate("user", "name email")
@@ -102,7 +102,7 @@ exports.getRecentOrders = async (req, res, next) => {
 // @desc    Get analytics data
 // @route   GET /api/v1/admin/analytics/overview
 // @access  Private/Admin
-exports.getAnalytics = async (req, res, next) => {
+export const getAnalytics = async (req, res, next) => {
     try {
         // Get monthly sales data for the last 6 months
         const sixMonthsAgo = new Date();
@@ -160,7 +160,7 @@ exports.getAnalytics = async (req, res, next) => {
 // @desc    Get sales data for charts
 // @route   GET /api/v1/admin/analytics/sales-data
 // @access  Private/Admin
-exports.getSalesData = async (req, res, next) => {
+export const getSalesData = async (req, res, next) => {
     try {
         const { period = "6months" } = req.query;
 
@@ -236,7 +236,7 @@ exports.getSalesData = async (req, res, next) => {
 // @desc    Get top selling products
 // @route   GET /api/v1/admin/analytics/top-products
 // @access  Private/Admin
-exports.getTopProducts = async (req, res, next) => {
+export const getTopProducts = async (req, res, next) => {
     try {
         const topProducts = await Order.aggregate([
             { $unwind: "$orderItems" },
@@ -292,7 +292,7 @@ exports.getTopProducts = async (req, res, next) => {
 // @desc    Get all users (admin)
 // @route   GET /api/v1/admin/users
 // @access  Private/Admin
-exports.getAllUsers = async (req, res, next) => {
+export const getAllUsers = async (req, res, next) => {
     try {
         const users = await User.find().select("-password");
 

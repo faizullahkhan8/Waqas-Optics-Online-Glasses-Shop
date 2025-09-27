@@ -1,28 +1,56 @@
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { SAMPLE_PRODUCTS } from "../Utils/MockData";
 import { Helmet } from "react-helmet";
 import Container from "../components/UI/Container";
 import Button from "../components/UI/Button";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../store/cartSlice";
 import { toggleWishlist } from "../store/wishlistSlice";
-import { useState } from "react";
 import toast from "react-hot-toast";
 import NotFoundPage from "./NotFound";
+import { productApi } from "../services/productService";
 
 export default function ProductDetailPage() {
     const { slug } = useParams();
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const product = SAMPLE_PRODUCTS.find((p) => p.slug === slug);
+    const [product, setProduct] = useState(null);
     const [selectedImage, setSelectedImage] = useState(0);
     const [quantity, setQuantity] = useState(1);
     const wishlist = useSelector((state) => state.wishlist);
     const isInWishlist = wishlist.some((item) => item.id === product?.id);
+    const [relatedProducts, setRelatedProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
 
+    useEffect(() => {
+        async function fetchProduct() {
+            setLoading(true);
+            try {
+                const data = await productApi.getProduct(slug);
+                setProduct(data);
+                // Fetch related products by category
+                if (data.category) {
+                    const rel = await productApi.getProductsByCategory(
+                        data.category
+                    );
+                    setRelatedProducts(
+                        rel.filter((p) => p.id !== data.id).slice(0, 4)
+                    );
+                }
+            } catch {
+                setProduct(null);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchProduct();
+    }, [slug]);
+
+    if (loading) return <div className="text-center py-20">Loading...</div>;
     if (!product) return <NotFoundPage />;
 
-    const handleAddToCart = () => {
+    const handleAddToCart = async () => {
+        // Optionally use backend cart API here
         dispatch(addToCart({ ...product, qty: quantity }));
         toast.success(`${product.title} added to cart`);
         navigate("/cart");
@@ -36,10 +64,6 @@ export default function ProductDetailPage() {
             } wishlist`
         );
     };
-
-    const relatedProducts = SAMPLE_PRODUCTS.filter(
-        (p) => p.id !== product.id && p.category === product.category
-    ).slice(0, 4);
 
     return (
         <main>
@@ -63,7 +87,6 @@ export default function ProductDetailPage() {
           })}
         `}</script>
             </Helmet>
-
             <section className="py-16 bg-gray-50">
                 <Container>
                     <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow-sm p-8 lg:p-12">
@@ -120,13 +143,11 @@ export default function ProductDetailPage() {
                                     )}
                                 </div>
                             </div>
-
                             <div className="lg:py-8">
                                 <div className="lg:py-4">
                                     <h1 className="text-3xl md:text-4xl font-serif font-bold text-gray-900">
                                         {product.title}
                                     </h1>
-
                                     <div className="mt-6 flex items-baseline gap-4">
                                         <span className="text-3xl font-medium text-gray-900">
                                             ${product.price.toFixed(2)}
@@ -137,13 +158,11 @@ export default function ProductDetailPage() {
                                             </span>
                                         )}
                                     </div>
-
                                     <div className="mt-8">
                                         <p className="text-lg text-gray-600 leading-relaxed">
                                             {product.description}
                                         </p>
                                     </div>
-
                                     <div className="mt-12 space-y-8">
                                         <div className="flex items-center gap-6">
                                             <label className="font-medium text-gray-900">
@@ -185,7 +204,6 @@ export default function ProductDetailPage() {
                                                 </button>
                                             </div>
                                         </div>
-
                                         <div className="flex gap-4">
                                             <Button
                                                 onClick={handleAddToCart}
@@ -210,39 +228,29 @@ export default function ProductDetailPage() {
                                             </Button>
                                         </div>
                                     </div>
-
                                     <div className="mt-12 pt-8 border-t border-gray-100">
                                         <h2 className="text-xl font-serif font-bold text-gray-900 mb-6">
                                             Product Specifications
                                         </h2>
                                         <dl className="grid md:grid-cols-2 gap-x-8 gap-y-4">
                                             {[
-                                                {
-                                                    label: "Category",
-                                                    value: product.category,
-                                                },
-                                                {
-                                                    label: "Gender",
-                                                    value: product.gender,
-                                                },
-                                                {
-                                                    label: "Material",
-                                                    value: product.material,
-                                                },
-                                                {
-                                                    label: "Color",
-                                                    value: product.color,
-                                                },
-                                            ].map((detail) => (
+                                                "category",
+                                                "gender",
+                                                "material",
+                                                "color",
+                                            ].map((key) => (
                                                 <div
-                                                    key={detail.label}
+                                                    key={key}
                                                     className="flex items-center"
                                                 >
                                                     <dt className="w-32 font-medium text-gray-500">
-                                                        {detail.label}
+                                                        {key
+                                                            .charAt(0)
+                                                            .toUpperCase() +
+                                                            key.slice(1)}
                                                     </dt>
                                                     <dd className="text-gray-900">
-                                                        {detail.value}
+                                                        {product[key]}
                                                     </dd>
                                                 </div>
                                             ))}
@@ -252,7 +260,6 @@ export default function ProductDetailPage() {
                             </div>
                         </div>
                     </div>
-
                     {/* Related Products Section */}
                     <div className="mt-20 pt-12 border-t border-gray-100">
                         <div className="text-center mb-12">
@@ -263,7 +270,6 @@ export default function ProductDetailPage() {
                                 Discover similar styles from our collection
                             </p>
                         </div>
-
                         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
                             {relatedProducts.map((rp) => (
                                 <Link

@@ -1,50 +1,43 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Helmet } from "react-helmet";
 import Container from "../components/UI/Container";
 import Button from "../components/UI/Button";
 import Webcam from "react-webcam";
 import Draggable from "react-draggable";
-import { useSelector } from "react-redux";
 import { ShoppingBagIcon } from "@heroicons/react/24/outline";
+import { productApi } from "../services/productService";
+import toast from "react-hot-toast";
 
 export default function VirtualTryOnPage() {
     const [mode, setMode] = useState("webcam"); // "webcam" or "upload"
     const [uploadedImage, setUploadedImage] = useState(null);
     const [selectedGlasses, setSelectedGlasses] = useState(null);
     const [glassesSize, setGlassesSize] = useState(100);
+    const [glassesPosition, setGlassesPosition] = useState({ x: 0, y: 0 });
     const webcamRef = useRef(null);
     const [mirror, setMirror] = useState(true);
+    const [glasses, setGlasses] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    // Get all products that are glasses from the mock data
-    const products = useSelector((state) => state.products) || [];
-    let glasses = products.filter(
-        (p) => p.category === "Glasses" || p.category === "Sunglasses"
-    );
-    // Inject example glasses if none exist (for testing/demo)
-    if (!glasses || glasses.length === 0) {
-        glasses = [
-            {
-                id: "demo1",
-                title: "Demo Classic Glasses",
-                price: 99,
-                slug: "demo-classic-glasses",
-                category: "Glasses",
-                images: [
-                    "https://raw.githubusercontent.com/edent/SuperTinyIcons/master/images/svg/glasses.svg"
-                ],
-            },
-            {
-                id: "demo2",
-                title: "Demo Sunglasses",
-                price: 129,
-                slug: "demo-sunglasses",
-                category: "Sunglasses",
-                images: [
-                    "https://raw.githubusercontent.com/edent/SuperTinyIcons/master/images/svg/sunglasses.svg"
-                ],
-            },
-        ];
-    }
+    // Fetch glasses products from backend
+    useEffect(() => {
+        async function fetchGlasses() {
+            setLoading(true);
+            try {
+                const data = await productApi.getProducts({
+                    category: "glasses,sunglasses",
+                    limit: 20,
+                });
+                setGlasses(data.products || []);
+            } catch (error) {
+                toast.error("Failed to load glasses");
+                console.error("Error fetching glasses:", error);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchGlasses();
+    }, []);
 
     const capture = useCallback(() => {
         if (webcamRef.current) {
@@ -82,18 +75,36 @@ export default function VirtualTryOnPage() {
                 />
             </Helmet>
 
-            <section className="py-12">
+            <section className="py-12 min-h-screen bg-gray-50">
                 <Container>
-                    <div className="max-w-5xl mx-auto">
+                    <div className="max-w-6xl mx-auto">
                         <div className="text-center mb-12">
-                            <h1 className="text-4xl font-serif font-semibold text-gray-900">
+                            <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium mb-4">
+                                <span>🔬</span>
+                                <span>AI-Powered Virtual Try-On</span>
+                            </div>
+                            <h1 className="text-5xl font-serif font-bold text-gray-900 mb-4">
                                 Virtual Try-On Experience
                             </h1>
-                            <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+                            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
                                 Experience our eyewear collection in real-time.
                                 Use your webcam or upload a photo to see how our
-                                frames complement your style.
+                                frames complement your unique style.
                             </p>
+                            <div className="flex items-center justify-center gap-8 mt-8 text-sm text-gray-500">
+                                <div className="flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                    <span>Real-time preview</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                                    <span>Drag to position</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                                    <span>Adjustable sizing</span>
+                                </div>
+                            </div>
                         </div>
 
                         <div className="mt-8 grid md:grid-cols-3 gap-8">
@@ -106,35 +117,57 @@ export default function VirtualTryOnPage() {
                                     </h2>
                                 </div>
                                 <div className="mt-4 space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-                                    {glasses.map((glass) => (
-                                        <button
-                                            key={glass.id}
-                                            onClick={() =>
-                                                setSelectedGlasses(glass)
-                                            }
-                                            className={`block w-full text-left p-2 rounded-md transition-colors ${
-                                                selectedGlasses?.id === glass.id
-                                                    ? "bg-gray-100 border-gray-900"
-                                                    : "hover:bg-gray-50"
-                                            }`}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <img
-                                                    src={glass.images[0]}
-                                                    alt={glass.title}
-                                                    className="w-12 h-12 object-cover rounded"
-                                                />
-                                                <div>
-                                                    <div className="font-medium text-sm">
-                                                        {glass.title}
-                                                    </div>
-                                                    <div className="text-sm text-gray-500">
-                                                        ${glass.price}
+                                    {loading ? (
+                                        <div className="text-center py-8">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+                                            <p className="text-gray-500 mt-2">
+                                                Loading frames...
+                                            </p>
+                                        </div>
+                                    ) : glasses.length === 0 ? (
+                                        <div className="text-center py-8 text-gray-500">
+                                            No frames available
+                                        </div>
+                                    ) : (
+                                        glasses.map((glass) => (
+                                            <button
+                                                key={glass.id}
+                                                onClick={() => {
+                                                    setSelectedGlasses(glass);
+                                                    setGlassesPosition({
+                                                        x: 0,
+                                                        y: 0,
+                                                    });
+                                                }}
+                                                className={`block w-full text-left p-3 rounded-lg transition-colors border-2 ${
+                                                    selectedGlasses?.id ===
+                                                    glass.id
+                                                        ? "bg-blue-50 border-blue-500"
+                                                        : "hover:bg-gray-50 border-transparent"
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <img
+                                                        src={glass.images[0]}
+                                                        alt={glass.title}
+                                                        className="w-12 h-12 object-cover rounded"
+                                                        onError={(e) => {
+                                                            e.target.src =
+                                                                "/api/placeholder/48/48";
+                                                        }}
+                                                    />
+                                                    <div>
+                                                        <div className="font-medium text-sm text-gray-900">
+                                                            {glass.title}
+                                                        </div>
+                                                        <div className="text-sm text-gray-500">
+                                                            ${glass.price}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </button>
-                                    ))}
+                                            </button>
+                                        ))
+                                    )}
                                 </div>
                             </div>
 
@@ -235,8 +268,19 @@ export default function VirtualTryOnPage() {
                                                     className="w-full h-full object-cover"
                                                 />
                                                 {selectedGlasses && (
-                                                    <Draggable>
-                                                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 cursor-move">
+                                                    <Draggable
+                                                        position={
+                                                            glassesPosition
+                                                        }
+                                                        onDrag={(e, data) => {
+                                                            setGlassesPosition({
+                                                                x: data.x,
+                                                                y: data.y,
+                                                            });
+                                                        }}
+                                                        bounds="parent"
+                                                    >
+                                                        <div className="absolute top-1/2 left-1/2 cursor-move">
                                                             <img
                                                                 src={
                                                                     selectedGlasses
@@ -246,11 +290,19 @@ export default function VirtualTryOnPage() {
                                                                     selectedGlasses.title
                                                                 }
                                                                 style={{
-                                                                    width: `${glassesSize}%`,
-                                                                    maxWidth:
-                                                                        "none",
+                                                                    width: `${glassesSize}px`,
+                                                                    height: "auto",
+                                                                    transform:
+                                                                        "translate(-50%, -50%)",
+                                                                    filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.3))",
                                                                 }}
-                                                                className="pointer-events-none"
+                                                                className="pointer-events-none select-none"
+                                                                onError={(
+                                                                    e
+                                                                ) => {
+                                                                    e.target.src =
+                                                                        "/api/placeholder/120/40";
+                                                                }}
                                                             />
                                                         </div>
                                                     </Draggable>
@@ -262,54 +314,109 @@ export default function VirtualTryOnPage() {
                                                                 null
                                                             );
                                                             setMode("webcam");
+                                                            setSelectedGlasses(
+                                                                null
+                                                            );
+                                                            setGlassesPosition({
+                                                                x: 0,
+                                                                y: 0,
+                                                            });
                                                         }}
                                                         className="bg-blue-600 text-white"
                                                     >
                                                         Take New Photo
                                                     </Button>
+                                                    {selectedGlasses && (
+                                                        <Button
+                                                            onClick={() => {
+                                                                setSelectedGlasses(
+                                                                    null
+                                                                );
+                                                                setGlassesPosition(
+                                                                    {
+                                                                        x: 0,
+                                                                        y: 0,
+                                                                    }
+                                                                );
+                                                            }}
+                                                            className="bg-gray-600 text-white"
+                                                        >
+                                                            Remove Glasses
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             </div>
                                         )}
                                     </div>
 
                                     {selectedGlasses && uploadedImage && (
-                                        <div className="mt-4">
-                                            <label className="block text-sm font-medium text-gray-700">
-                                                Adjust Size
-                                            </label>
-                                            <input
-                                                type="range"
-                                                min="50"
-                                                max="150"
-                                                value={glassesSize}
-                                                onChange={(e) =>
-                                                    setGlassesSize(
-                                                        Number(e.target.value)
-                                                    )
-                                                }
-                                                className="w-full mt-2"
-                                            />
+                                        <div className="mt-4 space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Adjust Size: {glassesSize}px
+                                                </label>
+                                                <input
+                                                    type="range"
+                                                    min="80"
+                                                    max="200"
+                                                    value={glassesSize}
+                                                    onChange={(e) =>
+                                                        setGlassesSize(
+                                                            Number(
+                                                                e.target.value
+                                                            )
+                                                        )
+                                                    }
+                                                    className="w-full"
+                                                />
+                                            </div>
+                                            <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+                                                💡 <strong>Tip:</strong> Drag
+                                                the glasses to position them on
+                                                your face, then adjust the size
+                                                using the slider.
+                                            </div>
                                         </div>
                                     )}
 
                                     {selectedGlasses && (
-                                        <div className="mt-4 flex justify-between items-center">
-                                            <div>
-                                                <div className="font-medium">
-                                                    {selectedGlasses.title}
+                                        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                                            <div className="flex justify-between items-start">
+                                                <div className="flex-1">
+                                                    <h3 className="font-serif text-lg font-medium text-gray-900">
+                                                        {selectedGlasses.title}
+                                                    </h3>
+                                                    <p className="text-sm text-gray-600 mt-1">
+                                                        {
+                                                            selectedGlasses.category
+                                                        }
+                                                    </p>
+                                                    <div className="text-xl font-bold text-gray-900 mt-2">
+                                                        ${selectedGlasses.price}
+                                                    </div>
                                                 </div>
-                                                <div className="text-sm text-gray-500">
-                                                    ${selectedGlasses.price}
+                                                <div className="flex flex-col gap-2 ml-4">
+                                                    <Button
+                                                        onClick={() => {
+                                                            window.location.href = `/product/${selectedGlasses.slug}`;
+                                                        }}
+                                                        className="bg-gray-900 text-white px-6 py-2"
+                                                    >
+                                                        View Details
+                                                    </Button>
+                                                    <Button
+                                                        onClick={() => {
+                                                            // Add to cart functionality
+                                                            toast.success(
+                                                                `${selectedGlasses.title} added to cart!`
+                                                            );
+                                                        }}
+                                                        className="bg-blue-600 text-white px-6 py-2"
+                                                    >
+                                                        Add to Cart
+                                                    </Button>
                                                 </div>
                                             </div>
-                                            <Button
-                                                onClick={() => {
-                                                    window.location.href = `/product/${selectedGlasses.slug}`;
-                                                }}
-                                                className="bg-gray-900 text-white"
-                                            >
-                                                Buy Now
-                                            </Button>
                                         </div>
                                     )}
                                 </div>

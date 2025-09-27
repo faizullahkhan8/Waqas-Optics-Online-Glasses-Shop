@@ -1,8 +1,10 @@
+/* eslint-disable react-refresh/only-export-components */
 import { lazy } from "react";
 import MainLayout from "./layout/MainLayout";
 import HomePage from "./Pages/Home";
 import LoginPage from "./Pages/Login";
 import NotFoundPage from "./Pages/NotFound";
+import RegisterPage from "./Pages/Register";
 
 // Lazy loaded pages
 const LazyShop = lazy(() => import("./Pages/Shop"));
@@ -59,6 +61,10 @@ export const routes = [
             {
                 path: "login",
                 element: <LoginPage />,
+            },
+            {
+                path: "register",
+                element: <RegisterPage />,
             },
             {
                 path: "about",
