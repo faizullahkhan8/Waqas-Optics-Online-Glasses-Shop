@@ -6,6 +6,14 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 
+// routes
+const authRoutes = require("./routes/auth");
+const productRoutes = require("./routes/product");
+const cartRoutes = require("./routes/cart");
+const orderRoutes = require("./routes/order");
+const adminRoutes = require("./routes/admin");
+const additionalRoutes = require("./routes/additional");
+
 // Load environment variables
 dotenv.config();
 
@@ -25,8 +33,10 @@ app.use(morgan("dev"));
 // Setup CORS
 app.use(
     cors({
-        origin: process.env.FRONTEND_URL,
+        origin: ["http://localhost:3001", "http://localhost:3002"], // or your deployed frontend URL
         credentials: true,
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization"],
     })
 );
 
@@ -37,13 +47,13 @@ const limiter = rateLimit({
 });
 app.use("/api", limiter);
 
-// Routes
-app.use("/api/v1/auth", require("./routes/auth"));
-app.use("/api/v1/products", require("./routes/product"));
-app.use("/api/v1/cart", require("./routes/cart"));
-app.use("/api/v1/orders", require("./routes/order"));
-app.use("/api/v1/admin", require("./routes/admin"));
-app.use("/api/v1/additional", require("./routes/additional"));
+// Use route references here
+app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/products", productRoutes);
+app.use("/api/v1/cart", cartRoutes);
+app.use("/api/v1/orders", orderRoutes);
+app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/additional", additionalRoutes);
 
 // Error Middleware
 const errorMiddleware = require("./middleware/error");

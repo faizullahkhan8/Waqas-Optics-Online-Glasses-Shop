@@ -7,61 +7,95 @@ import {
     FunnelIcon,
 } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+    createProduct,
+    fetchProducts,
+    updateProduct,
+    deleteProduct,
+} from "../services/adminService";
+import ProductForm from "../components/Product/ProductForm";
 
 const Products = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("all");
     const [showAddModal, setShowAddModal] = useState(false);
 
-    // Mock product data
-    const products = [
-        {
-            id: 1,
-            name: "Ray-Ban Round Metal",
-            category: "Sunglasses",
-            price: "$169.00",
-            stock: 45,
-            status: "Active",
-            image: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=100&q=80",
-        },
-        {
-            id: 2,
-            name: "Oakley Holbrook",
-            category: "Sports",
-            price: "$199.00",
-            stock: 32,
-            status: "Active",
-            image: "https://images.unsplash.com/photo-1574258495973-f010dfbb5371?w=100&q=80",
-        },
-        {
-            id: 3,
-            name: "Tom Ford Morgan",
-            category: "Prescription",
-            price: "$329.00",
-            stock: 18,
-            status: "Low Stock",
-            image: "https://images.unsplash.com/photo-1586953980229-bd16a0cd3a29?w=100&q=80",
-        },
-        {
-            id: 4,
-            name: "Persol 649 Original",
-            category: "Sunglasses",
-            price: "$279.00",
-            stock: 0,
-            status: "Out of Stock",
-            image: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=100&q=80",
-        },
-    ];
+    const {
+        data: productsData,
+        isLoading: productsLoading,
+        isError: productsError,
+    } = useQuery({
+        queryKey: ["products"],
+        queryFn: () => fetchProducts({}),
+        staleTime: 1000 * 60 * 2,
+    });
+
+    const products = productsData?.products || [];
 
     const categories = ["all", "Sunglasses", "Prescription", "Sports"];
 
-    const handleEdit = (productId) => {
-        toast.success(`Edit product ${productId}`);
+    const [editingProduct, setEditingProduct] = useState(null);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const queryClient = useQueryClient();
+
+    const deleteMutation = useMutation({
+        mutationFn: (id) => deleteProduct(id),
+        onSuccess: () => {
+            toast.success("Product deleted");
+            queryClient.invalidateQueries(["products"]);
+        },
+        onError: (err) => {
+            const msg =
+                err?.response?.data?.message ||
+                err.message ||
+                "Failed to delete";
+            toast.error(msg);
+        },
+    });
+
+    const handleEdit = (product) => {
+        setEditingProduct(product);
+        setShowEditModal(true);
     };
 
     const handleDelete = (productId) => {
-        toast.success(`Delete product ${productId}`);
+        if (!confirm("Delete this product?")) return;
+        deleteMutation.mutate(productId);
     };
+
+    const createMutation = useMutation({
+        mutationFn: (formData) => createProduct(formData),
+        onSuccess: () => {
+            toast.success("Product created");
+            setShowAddModal(false);
+            queryClient.invalidateQueries(["products"]);
+        },
+        onError: (err) => {
+            const msg =
+                err?.response?.data?.message ||
+                err.message ||
+                "Failed to create product";
+            toast.error(msg);
+        },
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: ({ id, formData }) => updateProduct(id, formData),
+        onSuccess: () => {
+            toast.success("Product updated");
+            setShowEditModal(false);
+            setEditingProduct(null);
+            queryClient.invalidateQueries(["products"]);
+        },
+        onError: (err) => {
+            const msg =
+                err?.response?.data?.message ||
+                err.message ||
+                "Failed to update product";
+            toast.error(msg);
+        },
+    });
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -77,11 +111,12 @@ const Products = () => {
     };
 
     const filteredProducts = products.filter((product) => {
-        const matchesSearch = product.name
+        const matchesSearch = (product.name || "")
             .toLowerCase()
             .includes(searchTerm.toLowerCase());
         const matchesCategory =
-            selectedCategory === "all" || product.category === selectedCategory;
+            selectedCategory === "all" ||
+            (product.category || "") === selectedCategory;
         return matchesSearch && matchesCategory;
     });
 
@@ -105,6 +140,62 @@ const Products = () => {
                     Add Product
                 </button>
             </div>
+
+            {/* Add Product Modal */}
+            {showAddModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold">
+                                Add Product
+                            </h3>
+                            <button
+                                onClick={() => setShowAddModal(false)}
+                                className="text-gray-500 hover:text-gray-700"
+                            >
+                                Close
+                            </button>
+                        </div>
+
+                        <ProductForm
+                            onCancel={() => setShowAddModal(false)}
+                            onSubmit={(fd) => createMutation.mutate(fd)}
+                            submitLabel="Create"
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Product Modal */}
+            {showEditModal && editingProduct && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold">
+                                Edit Product
+                            </h3>
+                            <button
+                                onClick={() => setShowEditModal(false)}
+                                className="text-gray-500 hover:text-gray-700"
+                            >
+                                Close
+                            </button>
+                        </div>
+
+                        <ProductForm
+                            initial={editingProduct}
+                            onCancel={() => setShowEditModal(false)}
+                            onSubmit={(fd) =>
+                                updateMutation.mutate({
+                                    id: editingProduct._id || editingProduct.id,
+                                    formData: fd,
+                                })
+                            }
+                            submitLabel="Update"
+                        />
+                    </div>
+                </div>
+            )}
 
             {/* Filters and Search */}
             <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
@@ -174,67 +265,109 @@ const Products = () => {
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {filteredProducts.map((product) => (
-                                <tr
-                                    key={product.id}
-                                    className="hover:bg-gray-50"
-                                >
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center">
-                                            <div className="flex-shrink-0 h-12 w-12">
-                                                <img
-                                                    className="h-12 w-12 rounded-lg object-cover"
-                                                    src={product.image}
-                                                    alt={product.name}
-                                                />
-                                            </div>
-                                            <div className="ml-4">
-                                                <div className="text-sm font-medium text-gray-900">
-                                                    {product.name}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {product.category}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                        {product.price}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {product.stock}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span
-                                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                                                product.status
-                                            )}`}
-                                        >
-                                            {product.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <div className="flex space-x-2">
-                                            <button
-                                                onClick={() =>
-                                                    handleEdit(product.id)
-                                                }
-                                                className="text-gray-600 hover:text-gray-900 p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                                            >
-                                                <PencilIcon className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() =>
-                                                    handleDelete(product.id)
-                                                }
-                                                className="text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50 transition-colors"
-                                            >
-                                                <TrashIcon className="w-4 h-4" />
-                                            </button>
-                                        </div>
+                            {productsLoading ? (
+                                <tr>
+                                    <td
+                                        colSpan={6}
+                                        className="px-6 py-4 text-sm text-gray-500"
+                                    >
+                                        Loading products...
                                     </td>
                                 </tr>
-                            ))}
+                            ) : productsError ? (
+                                <tr>
+                                    <td
+                                        colSpan={6}
+                                        className="px-6 py-4 text-sm text-red-500"
+                                    >
+                                        Failed to load products
+                                    </td>
+                                </tr>
+                            ) : (
+                                filteredProducts.map((product) => (
+                                    <tr
+                                        key={product._id || product.id}
+                                        className="hover:bg-gray-50"
+                                    >
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center">
+                                                <div className="flex-shrink-0 h-12 w-12">
+                                                    <img
+                                                        className="h-12 w-12 rounded-lg object-cover"
+                                                        src={
+                                                            (product.images &&
+                                                                product
+                                                                    .images[0] &&
+                                                                (product
+                                                                    .images[0]
+                                                                    .url ||
+                                                                    product
+                                                                        .images[0])) ||
+                                                            product.image ||
+                                                            ""
+                                                        }
+                                                        alt={product.name}
+                                                    />
+                                                </div>
+                                                <div className="ml-4">
+                                                    <div className="text-sm font-medium text-gray-900">
+                                                        {product.name}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {product.category}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            {product.price
+                                                ? `$${Number(
+                                                      product.price
+                                                  ).toFixed(2)}`
+                                                : product.price}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {product.stock}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span
+                                                className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                                                    product.stock > 0
+                                                        ? "Active"
+                                                        : "Out of Stock"
+                                                )}`}
+                                            >
+                                                {product.stock > 0
+                                                    ? "Active"
+                                                    : "Out of Stock"}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <div className="flex space-x-2">
+                                                <button
+                                                    onClick={() =>
+                                                        handleEdit(product)
+                                                    }
+                                                    className="text-gray-600 hover:text-gray-900 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                                                >
+                                                    <PencilIcon className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() =>
+                                                        handleDelete(
+                                                            product._id ||
+                                                                product.id
+                                                        )
+                                                    }
+                                                    className="text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                                                >
+                                                    <TrashIcon className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>

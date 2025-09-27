@@ -57,6 +57,55 @@ body {
     }
 }
 
+/* React Pro Sidebar Custom Styles */
+.ps-sidebar-root {
+    height: 100vh !important;
+}
+
+.ps-sidebar-container {
+    transition: all 0.3s ease !important;
+}
+
+.ps-menu-button:hover {
+    background-color: #f8fafc !important;
+}
+
+.ps-menu-button.ps-active {
+    background-color: #eef2ff !important;
+    color: #4338ca !important;
+}
+
+.ps-menu-button.ps-active .ps-menu-icon {
+    color: #4338ca !important;
+}
+
+/* Responsive improvements */
+@media (max-width: 1024px) {
+    .ps-sidebar-root {
+        position: fixed !important;
+        z-index: 50 !important;
+    }
+}
+
+/* Mobile overlay for react-pro-sidebar */
+.mobile-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 40;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.mobile-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
 /* Print styles */
 @media print {
     .no-print {

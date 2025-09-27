@@ -43,3 +43,56 @@ export const updateOrderStatus = async (orderId, status) => {
     });
     return res.data;
 };
+
+// Profile APIs (use auth endpoints)
+export const getProfile = async () => {
+    const res = await api.get("/auth/me");
+    return res.data;
+};
+
+export const updateProfile = async (payload) => {
+    const res = await api.put("/auth/me/update", payload);
+    return res.data;
+};
+
+// Auth
+export const loginAdmin = async (email, password) => {
+    const res = await api.post("/auth/login", { email, password });
+    return res.data;
+};
+
+export const logoutAdmin = async () => {
+    const res = await api.get("/auth/logout");
+    return res.data;
+};
+
+// Product admin APIs
+export const createProduct = async (formData) => {
+    // formData should be a FormData instance with images[] and other fields
+    const res = await api.post("/products/admin/product/new", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+    });
+    return res.data;
+};
+
+export const fetchProducts = async (params = {}) => {
+    const res = await api.get("/products/products", { params });
+    return res.data;
+};
+
+export const getProduct = async (id) => {
+    const res = await api.get(`/products/product/${id}`);
+    return res.data;
+};
+
+export const updateProduct = async (id, formData) => {
+    const res = await api.put(`/products/admin/product/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+    });
+    return res.data;
+};
+
+export const deleteProduct = async (id) => {
+    const res = await api.delete(`/products/admin/product/${id}`);
+    return res.data;
+};

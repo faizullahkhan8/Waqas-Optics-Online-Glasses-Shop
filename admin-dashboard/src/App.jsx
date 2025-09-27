@@ -8,6 +8,7 @@ import Orders from "./pages/Orders";
 import Users from "./pages/Users";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
+import AdminProfile from "./pages/AdminProfile";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -43,6 +44,7 @@ function App() {
                     <Route path="orders" element={<Orders />} />
                     <Route path="users" element={<Users />} />
                     <Route path="analytics" element={<Analytics />} />
+                    <Route path="profile" element={<AdminProfile />} />
                     <Route path="settings" element={<Settings />} />
                 </Route>
 

@@ -7,6 +7,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { PersistGate } from "redux-persist/integration/react";
 import { Toaster } from "react-hot-toast";
 import { store, persistor } from "./store/store";
+import { setupInterceptors } from "./lib/api";
 import "./index.css";
 import App from "./App.jsx";
 
@@ -25,6 +26,8 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById("root")).render(
     <StrictMode>
         <QueryClientProvider client={queryClient}>
+            {/* Setup Axios interceptors so they can dispatch redux actions (e.g., on 401) */}
+            {setupInterceptors(store.dispatch)}
             <Provider store={store}>
                 <PersistGate loading={null} persistor={persistor}>
                     <BrowserRouter>
