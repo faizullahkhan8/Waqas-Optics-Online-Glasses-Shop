@@ -36,7 +36,10 @@ const reviewValidation = [
 ];
 
 // Public routes
-router.route("/").get(getProducts);
+router.route("/").get((req, res, next) => {
+    console.log("get products called");
+    getProducts(req, res, next);
+});
 router.route("/:id").get(getSingleProduct);
 router.route("/reviews").get(getProductReviews);
 

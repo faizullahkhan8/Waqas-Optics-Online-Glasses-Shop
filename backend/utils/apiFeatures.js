@@ -36,6 +36,16 @@ class APIFeatures {
         return this;
     }
 
+    sort() {
+        if (this.queryStr.sort) {
+            const sortBy = this.queryStr.sort.split(",").join(" ");
+            this.query = this.query.sort(sortBy);
+        } else {
+            this.query = this.query.sort("createdAt"); // Default sort by creation date
+        }
+        return this;
+    }
+
     paginate(resPerPage) {
         const currentPage = Number(this.queryStr.page) || 1;
         const skip = resPerPage * (currentPage - 1);

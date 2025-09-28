@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useFeaturedProducts } from "../hooks/useProducts";
+import { useProducts } from "../hooks/useProducts";
 import ProductGrid from "../components/Product/ProductGrid";
 import { Helmet } from "react-helmet";
 import Container from "../components/UI/Container";
@@ -9,11 +9,7 @@ export default function HomePage() {
     useEffect(() => window.scrollTo(0, 0), []);
 
     // Fetch featured products from backend only
-    const {
-        data: featuredProductsData,
-        isLoading,
-        error,
-    } = useFeaturedProducts();
+    const { data: featuredProductsData, isLoading, error } = useProducts();
     const featuredProducts = featuredProductsData?.products || [];
     return (
         <main>
