@@ -93,7 +93,8 @@ export const addToCart = async (req, res, next) => {
 // Update cart item quantity => /api/v1/cart/update
 export const updateCartItem = async (req, res, next) => {
     try {
-        const { productId, quantity } = req.body;
+        const { id: productId } = req.params;
+        const { quantity } = req.body;
 
         const product = await Product.findById(productId);
         if (!product) {
@@ -139,7 +140,7 @@ export const updateCartItem = async (req, res, next) => {
 // Remove item from cart => /api/v1/cart/remove
 export const removeFromCart = async (req, res, next) => {
     try {
-        const { productId } = req.body;
+        const { productId } = req.params;
 
         const cart = await Cart.findOne({ user: req.user._id });
         if (!cart) {

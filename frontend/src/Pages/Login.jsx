@@ -23,11 +23,11 @@ export default function LoginPage() {
                 dispatch(setUser(data.user));
                 navigate("/account");
             },
-            onError: () => {
-                // Fallback to demo authentication if API fails
-                dispatch(setUser({ name: "Demo User", email: form.email }));
-                toast.success("Successfully logged in! (Demo mode)");
-                navigate("/account");
+            onError: (error) => {
+                toast.error(
+                    error.response.data.message ||
+                        "Login failed please try again!"
+                );
             },
         });
     }

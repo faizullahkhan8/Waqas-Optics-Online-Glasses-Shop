@@ -1,27 +1,52 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useMemo, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { clearCart } from "../store/cartSlice";
 import { Helmet } from "react-helmet";
 import Container from "../components/UI/Container";
 import Button from "../components/UI/Button";
-import StripeCheckout from "../components/StripeCheckout";
-import { orderApi } from "../services/orderService";
+import { useCreateOrder } from "../hooks/useOrders";
+import { useCreateCheckoutSession } from "../hooks/usePayment";
 
 export default function CheckoutPage() {
     const dispatch = useDispatch();
     const cart = useSelector((state) => state.cart);
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [form, setForm] = useState({
         name: "",
         email: "",
         address: "",
         city: "",
+        state: "",
         postal: "",
+        country: "",
+        phone: "",
     });
     const [errors, setErrors] = useState({});
     const [payment, setPayment] = useState("cod");
     const [stripeError, setStripeError] = useState(null);
+
+    // Check for error messages in URL params
+    useEffect(() => {
+        const error = searchParams.get("error");
+        if (error) {
+            if (error === "payment_cancelled") {
+                setStripeError("Payment was cancelled. Please try again.");
+            } else if (error === "no_session_id") {
+                setStripeError("Invalid payment session. Please try again.");
+            }
+        }
+    }, [searchParams]);
+
+    // Memoize cart total to prevent unnecessary recalculations
+    const cartTotal = useMemo(() => {
+        return cart.reduce((s, i) => s + i.price * i.qty, 0);
+    }, [cart]);
+
+    // Use TanStack Query hooks
+    const createOrderMutation = useCreateOrder();
+    const createCheckoutSessionMutation = useCreateCheckoutSession();
 
     function validate() {
         const e = {};
@@ -29,53 +54,78 @@ export default function CheckoutPage() {
         if (!form.email || !/\S+@\S+/.test(form.email))
             e.email = "Valid email required";
         if (!form.address) e.address = "Address required";
+        if (!form.city) e.city = "City required";
+        if (!form.state) e.state = "State required";
+        if (!form.postal) e.postal = "Postal code required";
+        if (!form.country) e.country = "Country required";
+        if (!form.phone) e.phone = "Phone number required";
         setErrors(e);
         return Object.keys(e).length === 0;
     }
 
-    async function placeOrder() {
+    function placeOrder() {
         if (!validate()) return;
+
         if (payment === "card") {
-            // Stripe payment handled in StripeCheckout
+            // Create Stripe checkout session and redirect
+            const orderData = {
+                shippingInfo: {
+                    address: {
+                        line1: form.address,
+                        city: form.city,
+                        state: form.state,
+                        country: form.country,
+                        postalCode: form.postal,
+                        phone: form.phone,
+                    },
+                },
+            };
+
+            createCheckoutSessionMutation.mutate(orderData, {
+                onSuccess: (res) => {
+                    // Redirect to Stripe checkout page
+                    window.location.href = res.url;
+                },
+                onError: (err) => {
+                    setStripeError(
+                        err?.response?.data?.message ||
+                            "Failed to create checkout session"
+                    );
+                },
+            });
             return;
         }
-        // Send order to backend for COD
-        try {
-            const orderData = {
-                items: cart,
-                total: cart.reduce((s, i) => s + i.price * i.qty, 0),
-                customer: form,
-                payment,
-            };
-            const res = await orderApi.createOrder(orderData);
-            dispatch(clearCart());
-            navigate(`/thank-you?order=${res.data.orderId || res.data._id}`);
-        } catch (err) {
-            setErrors({
-                submit: err?.response?.data?.message || "Order failed",
-            });
-        }
-    }
 
-    async function handleStripeSuccess(paymentIntent) {
-        // Send order to backend with Stripe payment info
-        try {
-            const orderData = {
-                items: cart,
-                total: cart.reduce((s, i) => s + i.price * i.qty, 0),
-                customer: form,
-                payment: "card",
-                stripePaymentId: paymentIntent.id,
-            };
-            const res = await orderApi.createOrder(orderData);
-            dispatch(clearCart());
-            navigate(`/thank-you?order=${res.data.orderId || res.data._id}`);
-        } catch (err) {
-            setStripeError(err?.response?.data?.message || "Order failed");
-        }
-    }
-    function handleStripeError(error) {
-        setStripeError(error?.message || "Payment failed");
+        // Send order to backend for COD
+        const orderData = {
+            shippingInfo: {
+                address: {
+                    line1: form.address,
+                    city: form.city,
+                    state: form.state,
+                    country: form.country,
+                    postalCode: form.postal,
+                    phone: form.phone,
+                },
+            },
+            paymentInfo: {
+                id: "COD-" + Date.now(), // Generate a unique ID for COD
+                status: "pending",
+            },
+        };
+        createOrderMutation.mutate(orderData, {
+            onSuccess: (res) => {
+                dispatch(clearCart());
+                navigate(
+                    `/thank-you?order=${res.data.orderId || res.data._id}`
+                );
+            },
+            onError: (err) => {
+                setErrors({
+                    submit: err?.response?.data?.message || "Order failed",
+                });
+            },
+        });
     }
 
     return (
@@ -199,6 +249,70 @@ export default function CheckoutPage() {
                                         </div>
                                     </div>
 
+                                    <div className="grid md:grid-cols-3 gap-6">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                State
+                                            </label>
+                                            <input
+                                                value={form.state}
+                                                onChange={(e) =>
+                                                    setForm((s) => ({
+                                                        ...s,
+                                                        state: e.target.value,
+                                                    }))
+                                                }
+                                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition-colors"
+                                            />
+                                            {errors.state && (
+                                                <div className="mt-2 text-red-500 text-sm">
+                                                    {errors.state}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Country
+                                            </label>
+                                            <input
+                                                value={form.country}
+                                                onChange={(e) =>
+                                                    setForm((s) => ({
+                                                        ...s,
+                                                        country: e.target.value,
+                                                    }))
+                                                }
+                                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition-colors"
+                                            />
+                                            {errors.country && (
+                                                <div className="mt-2 text-red-500 text-sm">
+                                                    {errors.country}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Phone Number
+                                            </label>
+                                            <input
+                                                type="tel"
+                                                value={form.phone}
+                                                onChange={(e) =>
+                                                    setForm((s) => ({
+                                                        ...s,
+                                                        phone: e.target.value,
+                                                    }))
+                                                }
+                                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition-colors"
+                                            />
+                                            {errors.phone && (
+                                                <div className="mt-2 text-red-500 text-sm">
+                                                    {errors.phone}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
                                             Payment Method
@@ -249,17 +363,42 @@ export default function CheckoutPage() {
                                         </div>
                                         {payment === "card" && (
                                             <div className="space-y-4">
-                                                <StripeCheckout
-                                                    amount={cart.reduce(
-                                                        (s, i) =>
-                                                            s + i.price * i.qty,
-                                                        0
-                                                    )}
-                                                    onSuccess={
-                                                        handleStripeSuccess
-                                                    }
-                                                    onError={handleStripeError}
-                                                />
+                                                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                                    <div className="flex items-center">
+                                                        <div className="flex-shrink-0">
+                                                            <svg
+                                                                className="h-5 w-5 text-blue-400"
+                                                                fill="currentColor"
+                                                                viewBox="0 0 20 20"
+                                                            >
+                                                                <path
+                                                                    fillRule="evenodd"
+                                                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                                                    clipRule="evenodd"
+                                                                />
+                                                            </svg>
+                                                        </div>
+                                                        <div className="ml-3">
+                                                            <h3 className="text-sm font-medium text-blue-800">
+                                                                Secure Payment
+                                                                with Stripe
+                                                            </h3>
+                                                            <div className="mt-2 text-sm text-blue-700">
+                                                                <p>
+                                                                    You'll be
+                                                                    redirected
+                                                                    to Stripe's
+                                                                    secure
+                                                                    checkout
+                                                                    page to
+                                                                    complete
+                                                                    your
+                                                                    payment.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                                 {stripeError && (
                                                     <div className="mt-2 text-red-500 text-sm">
                                                         {stripeError}
@@ -289,7 +428,10 @@ export default function CheckoutPage() {
                                             >
                                                 <div className="w-16 h-16 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
                                                     <img
-                                                        src={item.images[0]}
+                                                        src={
+                                                            item.images?.[0] ||
+                                                            "/placeholder-product.svg"
+                                                        }
                                                         alt={item.title}
                                                         className="w-full h-full object-cover"
                                                     />
@@ -315,16 +457,7 @@ export default function CheckoutPage() {
                                     <div className="mt-6 space-y-4">
                                         <div className="flex justify-between text-sm text-gray-600">
                                             <span>Subtotal</span>
-                                            <span>
-                                                $
-                                                {cart
-                                                    .reduce(
-                                                        (s, i) =>
-                                                            s + i.price * i.qty,
-                                                        0
-                                                    )
-                                                    .toFixed(2)}
-                                            </span>
+                                            <span>${cartTotal.toFixed(2)}</span>
                                         </div>
                                         <div className="flex justify-between text-sm text-gray-600">
                                             <span>Shipping</span>
@@ -340,15 +473,7 @@ export default function CheckoutPage() {
                                                     Total
                                                 </span>
                                                 <span className="text-2xl font-medium text-gray-900">
-                                                    $
-                                                    {cart
-                                                        .reduce(
-                                                            (s, i) =>
-                                                                s +
-                                                                i.price * i.qty,
-                                                            0
-                                                        )
-                                                        .toFixed(2)}
+                                                    ${cartTotal.toFixed(2)}
                                                 </span>
                                             </div>
                                         </div>
@@ -368,14 +493,18 @@ export default function CheckoutPage() {
                                         )}
                                         {payment === "card" && (
                                             <Button
-                                                className="w-full px-8 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                                                className="w-full px-8 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors font-medium"
                                                 onClick={(e) => {
                                                     e.preventDefault();
-                                                    // StripeCheckout handles payment
+                                                    placeOrder();
                                                 }}
-                                                disabled
+                                                disabled={
+                                                    createCheckoutSessionMutation.isPending
+                                                }
                                             >
-                                                Pay with Card
+                                                {createCheckoutSessionMutation.isPending
+                                                    ? "Redirecting to Payment..."
+                                                    : "Pay with Stripe"}
                                             </Button>
                                         )}
                                         <p className="mt-4 text-sm text-center text-gray-500">

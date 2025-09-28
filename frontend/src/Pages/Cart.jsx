@@ -4,9 +4,13 @@ import { updateQty, removeFromCart, clearCart } from "../store/cartSlice";
 import { Helmet } from "react-helmet";
 import Container from "../components/UI/Container";
 import Button from "../components/UI/Button";
-import toast from "react-hot-toast";
 import { useEffect } from "react";
-import { cartApi } from "../services/cartService";
+import {
+    useCart,
+    useUpdateCartItem,
+    useRemoveFromCart,
+    useClearCart,
+} from "../hooks/useCart";
 
 export default function CartPage() {
     const dispatch = useDispatch();
@@ -14,54 +18,39 @@ export default function CartPage() {
     const navigate = useNavigate();
     const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
 
+    // Use TanStack Query hooks
+    const { data: cartData } = useCart();
+    const updateCartItemMutation = useUpdateCartItem();
+    const removeFromCartMutation = useRemoveFromCart();
+    const clearCartMutation = useClearCart();
+
     // Fetch cart from backend on mount
     useEffect(() => {
-        async function fetchCart() {
-            try {
-                const data = await cartApi.getCart();
-                // You may need to adapt this if your cartSlice expects a certain format
-                dispatch({
-                    type: "cart/replaceCart",
-                    payload: data.items || data,
-                });
-            } catch {
-                toast.error("Failed to load cart");
-            }
+        if (cartData) {
+            // Sync Redux state with TanStack Query data
+            dispatch({
+                type: "cart/replaceCart",
+                payload: cartData.items || cartData,
+            });
         }
-        fetchCart();
-    }, [dispatch]);
+    }, [cartData, dispatch]);
 
     // Update quantity in backend
-    async function handleUpdateQty(id, qty) {
-        try {
-            await cartApi.updateCartItem(id, qty);
-            dispatch(updateQty({ id, qty }));
-            toast.success("Updated quantity");
-        } catch {
-            toast.error("Failed to update quantity");
-        }
+    function handleUpdateQty(id, qty) {
+        updateCartItemMutation.mutate({ itemId: id, quantity: qty });
+        dispatch(updateQty({ _id: id, qty }));
     }
 
     // Remove item in backend
-    async function handleRemove(id, title) {
-        try {
-            await cartApi.removeFromCart(id);
-            dispatch(removeFromCart(id));
-            toast.success(`${title} removed from cart`);
-        } catch {
-            toast.error("Failed to remove item");
-        }
+    function handleRemove(id) {
+        removeFromCartMutation.mutate(id);
+        dispatch(removeFromCart(id));
     }
 
     // Clear cart in backend
-    async function handleClearCart() {
-        try {
-            await cartApi.clearCart();
-            dispatch(clearCart());
-            toast.success("Cart cleared");
-        } catch {
-            toast.error("Failed to clear cart");
-        }
+    function handleClearCart() {
+        clearCartMutation.mutate();
+        dispatch(clearCart());
     }
 
     return (
@@ -102,16 +91,19 @@ export default function CartPage() {
                             <div className="lg:col-span-2 space-y-6">
                                 {cart.map((item) => (
                                     <div
-                                        key={item.id}
+                                        key={item._id}
                                         className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow"
                                     >
                                         <div className="flex gap-6">
                                             <Link
-                                                to={`/product/${item.slug}`}
+                                                to={`/product/${item._id}`}
                                                 className="shrink-0 aspect-square w-24 h-24 rounded-lg overflow-hidden bg-gray-100"
                                             >
                                                 <img
-                                                    src={item.images[0]}
+                                                    src={
+                                                        item.images?.[0] ||
+                                                        "/placeholder-product.svg"
+                                                    }
                                                     alt={item.title}
                                                     className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                                                     loading="lazy"
@@ -136,8 +128,7 @@ export default function CartPage() {
                                                     <Button
                                                         onClick={() =>
                                                             handleRemove(
-                                                                item.id,
-                                                                item.title
+                                                                item._id
                                                             )
                                                         }
                                                         className="text-gray-400 hover:text-red-500 bg-transparent shadow-none p-1"
@@ -164,7 +155,7 @@ export default function CartPage() {
                                                                         );
                                                                     if (qty > 0)
                                                                         handleUpdateQty(
-                                                                            item.id,
+                                                                            item._id,
                                                                             qty
                                                                         );
                                                                 }}

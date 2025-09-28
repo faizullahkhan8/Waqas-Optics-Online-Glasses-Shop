@@ -2,8 +2,6 @@ import ErrorHandler from "../utils/errorHandler.js";
 
 // Added logging to confirm middleware is triggered
 export default (err, req, res, next) => {
-    console.error("Error middleware triggered:", err);
-
     err.statusCode = err.statusCode || 500;
 
     if (process.env.NODE_ENV === "development") {

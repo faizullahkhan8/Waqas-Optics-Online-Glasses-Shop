@@ -137,7 +137,10 @@ export default function AboutPage() {
                                 <div className="relative mb-6 mx-auto w-48 h-48 rounded-full overflow-hidden group">
                                     <div className="absolute inset-0 bg-gray-900/10 group-hover:bg-gray-900/20 transition-colors"></div>
                                     <img
-                                        src={member.image}
+                                        src={
+                                            member.image ||
+                                            "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400&q=80"
+                                        }
                                         alt={member.name}
                                         className="w-full h-full object-cover"
                                     />

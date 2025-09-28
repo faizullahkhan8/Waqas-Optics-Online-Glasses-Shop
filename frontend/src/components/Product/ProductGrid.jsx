@@ -10,14 +10,14 @@ export default function ProductGrid({ products, isLoading = false }) {
 
     if (isLoading) {
         return (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 max-w-7xl mx-auto">
                 {[...Array(8)].map((_, index) => (
                     <div
                         key={index}
                         className="bg-white rounded-xl overflow-hidden shadow-sm animate-pulse"
                     >
                         <div className="aspect-[4/3] bg-gray-200" />
-                        <div className="p-4 space-y-3">
+                        <div className="p-3 sm:p-4 space-y-3">
                             <div className="h-4 bg-gray-200 rounded w-3/4" />
                             <div className="h-4 bg-gray-200 rounded w-1/2" />
                             <div className="h-8 bg-gray-200 rounded w-1/3 mt-4" />
@@ -29,10 +29,10 @@ export default function ProductGrid({ products, isLoading = false }) {
     }
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 max-w-7xl mx-auto">
             {products.map((product, index) => (
                 <div
-                    key={product.id}
+                    key={index}
                     className={`transform transition-all duration-500 ${
                         mounted
                             ? "translate-y-0 opacity-100"

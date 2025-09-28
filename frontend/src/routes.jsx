@@ -12,6 +12,7 @@ const LazyProduct = lazy(() => import("./Pages/ProductDetail"));
 const LazyCart = lazy(() => import("./Pages/Cart"));
 const LazyTryOn = lazy(() => import("./Pages/TryOn"));
 const LazyCheckout = lazy(() => import("./Pages/Checkout"));
+const LazyCheckoutSuccess = lazy(() => import("./Pages/CheckoutSuccess"));
 const LazyAccount = lazy(() => import("./Pages/Account"));
 const LazyAbout = lazy(() => import("./Pages/About"));
 const LazyContact = lazy(() => import("./Pages/ContactUs"));
@@ -39,7 +40,7 @@ export const routes = [
                 element: <LazyShop />,
             },
             {
-                path: "product/:slug",
+                path: "product/:id",
                 element: <LazyProduct />,
             },
             {
@@ -53,6 +54,10 @@ export const routes = [
             {
                 path: "checkout",
                 element: <LazyCheckout />,
+            },
+            {
+                path: "checkout/success",
+                element: <LazyCheckoutSuccess />,
             },
             {
                 path: "account",

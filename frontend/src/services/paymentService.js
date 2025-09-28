@@ -6,7 +6,13 @@ export const getStripeConfig = async () => {
     return res.data;
 };
 
-// Create payment intent
+// Create Stripe Checkout Session
+export const createCheckoutSession = async (orderData) => {
+    const res = await api.post("/payment/create-checkout-session", orderData);
+    return res.data;
+};
+
+// Create payment intent (kept for backward compatibility)
 export const createPaymentIntent = async (
     amount,
     currency = "usd",
@@ -16,6 +22,14 @@ export const createPaymentIntent = async (
         amount,
         currency,
         orderId,
+    });
+    return res.data;
+};
+
+// Verify Stripe Checkout Session
+export const verifyCheckoutSession = async (sessionId) => {
+    const res = await api.post("/payment/verify-session", {
+        sessionId,
     });
     return res.data;
 };

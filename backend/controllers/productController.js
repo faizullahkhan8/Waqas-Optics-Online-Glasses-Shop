@@ -32,7 +32,6 @@ export const createProduct = async (req, res, next) => {
 // Get all products => /api/v1/products
 export const getProducts = async (req, res, next) => {
     try {
-        console.log("get products entered");
         const resPerPage = 12;
         const productsCount = await Product.countDocuments();
 

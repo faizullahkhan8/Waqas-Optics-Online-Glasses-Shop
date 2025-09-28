@@ -28,7 +28,7 @@ export const cartApi = {
 
     // Clear entire cart
     clearCart: async () => {
-        const { data } = await api.delete("/cart");
+        const { data } = await api.delete("/cart/clear");
         return data;
     },
 };

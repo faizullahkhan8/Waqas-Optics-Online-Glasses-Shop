@@ -1,6 +1,7 @@
 import Order from "../models/order.js";
 import Product from "../models/product.js";
 import ErrorHandler from "../utils/errorHandler.js";
+import Cart from "../models/cart.js";
 
 // Create new order => /api/v1/order/new
 export const createOrder = async (req, res, next) => {

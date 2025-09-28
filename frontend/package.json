@@ -22,6 +22,7 @@
     "react-draggable": "^4.5.0",
     "react-helmet": "^6.1.0",
     "react-hot-toast": "^2.6.0",
+    "react-phone-input-2": "^2.15.1",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.9.1",
     "react-webcam": "^7.2.0",

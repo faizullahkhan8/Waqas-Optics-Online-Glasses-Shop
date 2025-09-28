@@ -1,86 +1,84 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import Container from "../components/UI/Container";
 import Button from "../components/UI/Button";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../store/cartSlice";
-import { toggleWishlist } from "../store/wishlistSlice";
-import toast from "react-hot-toast";
+import { addToWishlist, removeFromWishlist } from "../store/wishlistSlice";
+import { useAddToCart } from "../hooks/useCart";
+import { useAddToWishlist, useRemoveFromWishlist } from "../hooks/useWishlist";
 import NotFoundPage from "./NotFound";
-import { productApi } from "../services/productService";
+import { useProduct, useProductsByCategory } from "../hooks/useProducts";
 
 export default function ProductDetailPage() {
-    const { slug } = useParams();
+    const { id } = useParams();
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const [product, setProduct] = useState(null);
     const [selectedImage, setSelectedImage] = useState(0);
     const [quantity, setQuantity] = useState(1);
-    const wishlist = useSelector((state) => state.wishlist);
-    const isInWishlist = wishlist.some((item) => item.id === product?.id);
-    const [relatedProducts, setRelatedProducts] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const wishlist = useSelector((state) => state?.wishlist?.items || []);
 
-    useEffect(() => {
-        async function fetchProduct() {
-            setLoading(true);
-            try {
-                const data = await productApi.getProduct(slug);
-                setProduct(data);
-                // Fetch related products by category
-                if (data.category) {
-                    const rel = await productApi.getProductsByCategory(
-                        data.category
-                    );
-                    setRelatedProducts(
-                        rel.filter((p) => p.id !== data.id).slice(0, 4)
-                    );
-                }
-            } catch {
-                setProduct(null);
-            } finally {
-                setLoading(false);
-            }
-        }
-        fetchProduct();
-    }, [slug]);
+    // Use React Query hooks for data fetching
+    const { data: productData, isLoading, error } = useProduct(id);
+    const product = productData?.product;
 
-    if (loading) return <div className="text-center py-20">Loading...</div>;
-    if (!product) return <NotFoundPage />;
+    // Use TanStack Query hooks for mutations
+    const addToCartMutation = useAddToCart();
+    const addToWishlistMutation = useAddToWishlist();
+    const removeFromWishlistMutation = useRemoveFromWishlist();
 
-    const handleAddToCart = async () => {
-        // Optionally use backend cart API here
+    // Get related products if product category is available
+    const { data: relatedProductsData } = useProductsByCategory(
+        product?.category
+    );
+    const relatedProducts = relatedProductsData
+        ? relatedProductsData.filter((p) => p._id !== product?._id).slice(0, 4)
+        : [];
+
+    const isInWishlist = wishlist?.some((item) => item._id === product?._id);
+
+    if (isLoading) return <div className="text-center py-20">Loading...</div>;
+    if (error || !product) return <NotFoundPage />;
+
+    const handleAddToCart = () => {
+        addToCartMutation.mutate({
+            productId: product._id,
+            quantity: quantity,
+        });
+        // Update Redux state
         dispatch(addToCart({ ...product, qty: quantity }));
-        toast.success(`${product.title} added to cart`);
         navigate("/cart");
     };
 
-    const handleToggleWishlist = () => {
-        dispatch(toggleWishlist(product));
-        toast.success(
-            `${product.title} ${
-                isInWishlist ? "removed from" : "added to"
-            } wishlist`
-        );
+    const handleToggleWishlist = async () => {
+        if (!product) return;
+
+        if (isInWishlist) {
+            removeFromWishlistMutation.mutate(product._id);
+            dispatch(removeFromWishlist(product._id));
+        } else {
+            addToWishlistMutation.mutate(product._id);
+            dispatch(addToWishlist(product));
+        }
     };
 
     return (
         <main>
             <Helmet>
-                <title>{product.title} — GlassesShop</title>
-                <meta name="description" content={product.description} />
+                <title>{product?.title || "Product"} — GlassesShop</title>
+                <meta name="description" content={product?.description || ""} />
                 <script type="application/ld+json">{`
           ${JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Product",
-              name: product.title,
-              image: product.images,
-              description: product.description,
-              sku: product.id,
+              name: product?.title || "Product",
+              image: product?.images || [],
+              description: product?.description || "",
+              sku: product?._id || "",
               offers: {
                   "@type": "Offer",
-                  price: product.price.toString(),
+                  price: product?.price?.toString() || "0",
                   priceCurrency: "USD",
                   availability: "https://schema.org/InStock",
               },
@@ -273,13 +271,16 @@ export default function ProductDetailPage() {
                         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
                             {relatedProducts.map((rp) => (
                                 <Link
-                                    key={rp.id}
-                                    to={`/product/${rp.slug}`}
+                                    key={rp._id}
+                                    to={`/product/${rp._id}`}
                                     className="group"
                                 >
                                     <div className="aspect-[4/5] rounded-xl overflow-hidden bg-gray-100">
                                         <img
-                                            src={rp.images[0]}
+                                            src={
+                                                rp.images?.[0] ||
+                                                "/placeholder-product.svg"
+                                            }
                                             alt={rp.title}
                                             className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out"
                                             loading="lazy"

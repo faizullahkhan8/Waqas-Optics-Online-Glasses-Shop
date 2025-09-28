@@ -6,13 +6,17 @@ import crypto from "crypto";
 export const registerUser = async (req, res, next) => {
     try {
         const { name, email, password, phone } = req.body;
-        const user = await User.create({
-            name,
-            email,
-            password,
-            phone,
-            addresses: [],
+
+        const isEmailOrPhoneTaken = await User.findOne({
+            $or: [{ email }, { phone }],
         });
+
+        if (isEmailOrPhoneTaken) {
+            return next(new ErrorHandler("Email or Phone already in use", 400));
+        }
+
+        const user = await User.create({ name, email, password, phone });
+
         req.session.userId = user._id;
         res.status(201).json({ success: true, user });
     } catch (error) {

@@ -16,7 +16,7 @@ export const orderApi = {
 
     // Create new order
     createOrder: async (orderData) => {
-        const { data } = await api.post("/orders", orderData);
+        const { data } = await api.post("/orders/new", orderData);
         return data;
     },
 

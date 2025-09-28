@@ -104,7 +104,10 @@ const SearchBox = () => {
                                     >
                                         <div className="w-10 h-10 rounded bg-gray-100 flex-shrink-0 overflow-hidden">
                                             <img
-                                                src={s.images[0]}
+                                                src={
+                                                    s.images?.[0] ||
+                                                    "/placeholder-product.svg"
+                                                }
                                                 alt=""
                                                 className="w-full h-full object-cover"
                                                 loading="lazy"

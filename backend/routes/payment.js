@@ -1,8 +1,10 @@
 import express from "express";
 const router = express.Router();
 import {
+    createCheckoutSession,
     createPaymentIntent,
     confirmPayment,
+    verifyCheckoutSession,
     getPaymentStatus,
     handleWebhook,
     createCustomer,
@@ -21,6 +23,12 @@ router.post(
 );
 
 // Protected routes (require authentication)
+router.post(
+    "/create-checkout-session",
+    isAuthenticatedUser,
+    createCheckoutSession
+);
+router.post("/verify-session", isAuthenticatedUser, verifyCheckoutSession);
 router.post("/create-payment-intent", isAuthenticatedUser, createPaymentIntent);
 router.post("/confirm-payment", isAuthenticatedUser, confirmPayment);
 router.get("/status/:paymentIntentId", isAuthenticatedUser, getPaymentStatus);

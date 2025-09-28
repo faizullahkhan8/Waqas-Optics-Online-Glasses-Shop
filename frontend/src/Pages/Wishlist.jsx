@@ -1,29 +1,13 @@
-import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import Container from "../components/UI/Container";
 import ProductGrid from "../components/Product/ProductGrid";
 import Button from "../components/UI/Button";
 import { Link } from "react-router-dom";
-import { wishlistApi } from "../services/wishlistService";
+import { useWishlist } from "../hooks/useWishlist";
 
 export default function WishlistPage() {
-    const [wishlist, setWishlist] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        async function fetchWishlist() {
-            setLoading(true);
-            try {
-                const data = await wishlistApi.getWishlist();
-                setWishlist(data.items || []);
-            } catch {
-                setWishlist([]);
-            } finally {
-                setLoading(false);
-            }
-        }
-        fetchWishlist();
-    }, []);
+    const { data: wishlistData, isLoading } = useWishlist();
+    const wishlist = wishlistData?.items || wishlistData || [];
 
     return (
         <main>
@@ -41,7 +25,7 @@ export default function WishlistPage() {
                             All your favorite products in one place
                         </p>
                     </div>
-                    {loading ? (
+                    {isLoading ? (
                         <div className="max-w-xl mx-auto bg-white rounded-xl shadow-sm p-10 text-center">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
                             <h2 className="text-xl font-semibold text-gray-900 mb-2">

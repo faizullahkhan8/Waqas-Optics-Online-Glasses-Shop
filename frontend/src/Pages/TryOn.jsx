@@ -5,7 +5,7 @@ import Button from "../components/UI/Button";
 import Webcam from "react-webcam";
 import Draggable from "react-draggable";
 import { ShoppingBagIcon } from "@heroicons/react/24/outline";
-import { productApi } from "../services/productService";
+import { useProducts } from "../hooks/useProducts";
 import toast from "react-hot-toast";
 
 export default function VirtualTryOnPage() {
@@ -16,28 +16,26 @@ export default function VirtualTryOnPage() {
     const [glassesPosition, setGlassesPosition] = useState({ x: 0, y: 0 });
     const webcamRef = useRef(null);
     const [mirror, setMirror] = useState(true);
-    const [glasses, setGlasses] = useState([]);
-    const [loading, setLoading] = useState(true);
 
-    // Fetch glasses products from backend
+    // Fetch glasses products using TanStack Query
+    const {
+        data: glassesData,
+        isLoading: loading,
+        error,
+    } = useProducts({
+        category: "glasses,sunglasses",
+        limit: 20,
+    });
+
+    const glasses = glassesData?.products || [];
+
+    // Handle error state
     useEffect(() => {
-        async function fetchGlasses() {
-            setLoading(true);
-            try {
-                const data = await productApi.getProducts({
-                    category: "glasses,sunglasses",
-                    limit: 20,
-                });
-                setGlasses(data.products || []);
-            } catch (error) {
-                toast.error("Failed to load glasses");
-                console.error("Error fetching glasses:", error);
-            } finally {
-                setLoading(false);
-            }
+        if (error) {
+            toast.error("Failed to load glasses");
+            console.error("Error fetching glasses:", error);
         }
-        fetchGlasses();
-    }, []);
+    }, [error]);
 
     const capture = useCallback(() => {
         if (webcamRef.current) {
@@ -148,7 +146,10 @@ export default function VirtualTryOnPage() {
                                             >
                                                 <div className="flex items-center gap-3">
                                                     <img
-                                                        src={glass.images[0]}
+                                                        src={
+                                                            glass.images?.[0] ||
+                                                            "/placeholder-product.svg"
+                                                        }
                                                         alt={glass.title}
                                                         className="w-12 h-12 object-cover rounded"
                                                         onError={(e) => {
@@ -284,7 +285,8 @@ export default function VirtualTryOnPage() {
                                                             <img
                                                                 src={
                                                                     selectedGlasses
-                                                                        .images[0]
+                                                                        .images?.[0] ||
+                                                                    "/placeholder-product.svg"
                                                                 }
                                                                 alt={
                                                                     selectedGlasses.title

@@ -68,6 +68,16 @@ const limiter = rateLimit({
 });
 app.use("/api", limiter);
 
+// Specific rate limiting for payment operations
+const paymentLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // limit each IP to 10 payment requests per windowMs
+    message: "Too many payment requests, please try again later.",
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+app.use("/api/v1/payment", paymentLimiter);
+
 // Use route references here
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/products", productRoutes);
