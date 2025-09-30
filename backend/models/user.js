@@ -2,57 +2,56 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-const userSchema = new mongoose.Schema({
-    name: {
-        type: String,
-        required: [true, "Please enter your name"],
-        maxLength: [30, "Your name cannot exceed 30 characters"],
-    },
-    email: {
-        type: String,
-        required: [true, "Please enter your email"],
-        unique: true,
-        match: [
-            /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/,
-            "Please enter a valid email",
-        ],
-    },
-    password: {
-        type: String,
-        required: [true, "Please enter your password"],
-        minLength: [6, "Your password must be at least 6 characters"],
-        select: false,
-    },
-    phone: {
-        type: String,
-        required: [true, "Please enter your phone number"],
-    },
-    role: {
-        type: String,
-        default: "user",
-        enum: ["user", "admin"],
-    },
-    addresses: [
-        {
-            line1: String,
-            line2: String,
-            city: String,
-            state: String,
-            postalCode: String,
-            country: String,
-            isDefault: {
-                type: Boolean,
-                default: false,
-            },
+const userSchema = new mongoose.Schema(
+    {
+        name: {
+            type: String,
+            required: [true, "Please enter your name"],
+            maxLength: [30, "Your name cannot exceed 30 characters"],
         },
-    ],
-    resetPasswordToken: String,
-    resetPasswordExpire: Date,
-    createdAt: {
-        type: Date,
-        default: Date.now,
+        email: {
+            type: String,
+            required: [true, "Please enter your email"],
+            unique: true,
+            match: [
+                /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/,
+                "Please enter a valid email",
+            ],
+        },
+        password: {
+            type: String,
+            required: [true, "Please enter your password"],
+            minLength: [6, "Your password must be at least 6 characters"],
+            select: false,
+        },
+        phone: {
+            type: String,
+            required: [true, "Please enter your phone number"],
+        },
+        role: {
+            type: String,
+            default: "user",
+            enum: ["user", "admin"],
+        },
+        addresses: [
+            {
+                line1: String,
+                line2: String,
+                city: String,
+                state: String,
+                postalCode: String,
+                country: String,
+                isDefault: {
+                    type: Boolean,
+                    default: false,
+                },
+            },
+        ],
+        resetPasswordToken: String,
+        resetPasswordExpire: Date,
     },
-});
+    { timestamps: true }
+);
 
 // Hash password before saving
 userSchema.pre("save", async function (next) {

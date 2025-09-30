@@ -1,39 +1,40 @@
 import mongoose from "mongoose";
 
-const cartSchema = new mongoose.Schema({
-    user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
-    },
-    items: [
-        {
-            product: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "Product",
-                required: true,
-            },
-            quantity: {
-                type: Number,
-                required: true,
-                min: 1,
-                default: 1,
-            },
-            name: String,
-            price: Number,
-            image: String,
+const cartSchema = new mongoose.Schema(
+    {
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
         },
-    ],
-    totalPrice: {
-        type: Number,
-        required: true,
-        default: 0,
+        items: [
+            {
+                product: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "Product",
+                    required: true,
+                },
+                quantity: {
+                    type: Number,
+                    required: true,
+                    min: 1,
+                    default: 1,
+                },
+                name: String,
+                price: Number,
+                image: String,
+            },
+        ],
+        totalPrice: {
+            type: Number,
+            required: true,
+            default: 0,
+        },
     },
-    createdAt: {
-        type: Date,
-        default: Date.now,
-    },
-});
+    {
+        timestamps: true,
+    }
+);
 
 // Pre-save middleware to calculate total price
 cartSchema.pre("save", async function (next) {

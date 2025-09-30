@@ -22,13 +22,25 @@ export const authApi = {
 
     // Get current user profile
     getProfile: async () => {
-        const { data } = await api.get("/auth/profile");
+        const { data } = await api.get("/auth/me");
         return data;
     },
 
     // Update user profile
     updateProfile: async (profileData) => {
-        const { data } = await api.put("/auth/profile", profileData);
+        const { data } = await api.put("/auth/me/update", profileData);
+        return data;
+    },
+
+    // add/update address
+    updateAddress: async (addressData) => {
+        const { data } = await api.post("/auth/address", addressData);
+        return data;
+    },
+
+    // delete address
+    deleteAddress: async (addressId) => {
+        const { data } = await api.delete(`/auth/address/${addressId}`);
         return data;
     },
 

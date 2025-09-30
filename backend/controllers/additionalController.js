@@ -1,4 +1,6 @@
 import Wishlist from "../models/wishlist.js";
+import Order from "../models/order.js";
+// import Review from "../models/review.js";
 import Coupon from "../models/coupon.js";
 import Notification from "../models/notification.js";
 import Cart from "../models/cart.js";
@@ -200,6 +202,34 @@ export const clearAllNotifications = async (req, res, next) => {
         res.status(200).json({
             success: true,
             message: "All notifications marked as read",
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// endpoint => api/v1/additional/user-dashboard-stats
+// get stats for the user dashboard
+export const getUserDashboardStats = async (req, res, next) => {
+    try {
+        const userId = req.user._id;
+
+        // Get user orders count
+        const ordersCount = await Order.countDocuments({ user: userId });
+
+        // Get user wishlist items count
+        const wishlistCount = await Wishlist.countDocuments({ user: userId });
+
+        // Get user reviews count
+        // const reviewsCount = await Review.countDocuments({ user: userId });
+
+        res.status(200).json({
+            success: true,
+            stats: {
+                orders: ordersCount,
+                wishlist: wishlistCount,
+                // reviews: reviewsCount,
+            },
         });
     } catch (error) {
         next(error);

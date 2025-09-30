@@ -133,9 +133,9 @@ export const updateAddress = async (req, res, next) => {
             user.addresses.forEach((addr) => (addr.isDefault = false));
         }
         // If updating existing address
-        if (req.body.addressId) {
+        if (req.body._id) {
             const addressIndex = user.addresses.findIndex(
-                (addr) => addr._id.toString() === req.body.addressId
+                (addr) => addr._id.toString() === req.body._id
             );
             if (addressIndex >= 0) {
                 user.addresses[addressIndex] = newAddress;
@@ -144,6 +144,20 @@ export const updateAddress = async (req, res, next) => {
             // Adding new address
             user.addresses.push(newAddress);
         }
+        await user.save();
+        res.status(200).json({ success: true, addresses: user.addresses });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// delete address => /api/v1/auth/address/:id
+export const deleteAddress = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.session.userId);
+        user.addresses = user.addresses.filter(
+            (addr) => addr._id.toString() !== req.params.id
+        );
         await user.save();
         res.status(200).json({ success: true, addresses: user.addresses });
     } catch (error) {

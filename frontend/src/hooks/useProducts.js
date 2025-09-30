@@ -19,6 +19,7 @@ export const useProducts = (filters = {}) => {
         queryKey: productKeys.list(filters),
         queryFn: () => productApi.getProducts(filters),
         staleTime: 1000 * 60 * 5, // 5 minutes
+        keepPreviousData: true,
     });
 };
 
@@ -28,6 +29,7 @@ export const useProduct = (id) => {
         queryKey: productKeys.detail(id),
         queryFn: () => productApi.getProduct(id),
         enabled: !!id,
+        staleTime: 1000 * 60 * 5,
     });
 };
 

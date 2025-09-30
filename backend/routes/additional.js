@@ -11,6 +11,7 @@ import {
     getNotifications,
     markNotificationAsRead,
     clearAllNotifications,
+    getUserDashboardStats,
 } from "../controllers/additionalController.js";
 
 import { isAuthenticatedUser, authorizeRoles } from "../middleware/auth.js";
@@ -65,5 +66,9 @@ router
 router
     .route("/notifications/:id")
     .put(isAuthenticatedUser, markNotificationAsRead);
+
+router
+    .route("/user-dashboard-stats")
+    .get(isAuthenticatedUser, getUserDashboardStats);
 
 export default router;

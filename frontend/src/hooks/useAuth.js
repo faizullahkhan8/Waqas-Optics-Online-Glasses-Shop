@@ -94,6 +94,42 @@ export const useUpdateProfile = () => {
     });
 };
 
+// add/update address mutation
+export const useUpdateAddress = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: authApi.updateAddress,
+        onSuccess: (data) => {
+            queryClient.setQueryData(authKeys.profile(), data);
+            toast.success("Address updated successfully");
+        },
+        onError: (error) => {
+            toast.error(
+                error.response?.data?.message || "Address update failed"
+            );
+        },
+    });
+};
+
+// delete address mutation
+export const useDeleteAddress = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: authApi.deleteAddress,
+        onSuccess: (data) => {
+            queryClient.setQueryData(authKeys.profile(), data);
+            toast.success("Address deleted successfully");
+        },
+        onError: (error) => {
+            toast.error(
+                error.response?.data?.message || "Address deletion failed"
+            );
+        },
+    });
+};
+
 // Change password mutation
 export const useChangePassword = () => {
     return useMutation({

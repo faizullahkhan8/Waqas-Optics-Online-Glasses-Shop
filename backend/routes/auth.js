@@ -10,6 +10,7 @@ import {
     updatePassword,
     updateProfile,
     updateAddress,
+    deleteAddress,
 } from "../controllers/authController.js";
 
 import { isAuthenticatedUser } from "../middleware/auth.js";
@@ -24,12 +25,13 @@ router.get("/test", (req, res) => {
 // Auth routes
 router.post("/register", registerUser);
 router.post("/login", loginUser);
-router.get("/logout", logout);
+router.post("/logout", logout);
 
 // Protected routes
 router.get("/me", isAuthenticatedUser, getUserProfile);
 router.put("/password/update", isAuthenticatedUser, updatePassword);
 router.put("/me/update", isAuthenticatedUser, updateProfile);
 router.post("/address", isAuthenticatedUser, updateAddress);
+router.delete("/address/:id", isAuthenticatedUser, deleteAddress);
 
 export default router;

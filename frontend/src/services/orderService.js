@@ -4,7 +4,7 @@ import api from "../lib/api";
 export const orderApi = {
     // Get user's orders
     getOrders: async () => {
-        const { data } = await api.get("/orders");
+        const { data } = await api.get("/orders/user/all");
         return data;
     },
 

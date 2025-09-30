@@ -1,40 +1,39 @@
 import mongoose from "mongoose";
 
-const notificationSchema = new mongoose.Schema({
-    user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
+const notificationSchema = new mongoose.Schema(
+    {
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+        },
+        title: {
+            type: String,
+            required: true,
+        },
+        message: {
+            type: String,
+            required: true,
+        },
+        type: {
+            type: String,
+            enum: ["order", "product", "promotion", "system"],
+            required: true,
+        },
+        isRead: {
+            type: Boolean,
+            default: false,
+        },
+        relatedId: {
+            type: mongoose.Schema.Types.ObjectId,
+            refPath: "onModel",
+        },
+        onModel: {
+            type: String,
+            enum: ["Order", "Product", "Coupon"],
+        },
     },
-    title: {
-        type: String,
-        required: true,
-    },
-    message: {
-        type: String,
-        required: true,
-    },
-    type: {
-        type: String,
-        enum: ["order", "product", "promotion", "system"],
-        required: true,
-    },
-    isRead: {
-        type: Boolean,
-        default: false,
-    },
-    relatedId: {
-        type: mongoose.Schema.Types.ObjectId,
-        refPath: "onModel",
-    },
-    onModel: {
-        type: String,
-        enum: ["Order", "Product", "Coupon"],
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now,
-    },
-});
+    { timestamps: true }
+);
 
 export default mongoose.model("Notification", notificationSchema);

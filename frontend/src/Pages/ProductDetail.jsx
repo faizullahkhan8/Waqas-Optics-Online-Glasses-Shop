@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import Container from "../components/UI/Container";
 import Button from "../components/UI/Button";
@@ -13,7 +13,6 @@ import { useProduct, useProductsByCategory } from "../hooks/useProducts";
 
 export default function ProductDetailPage() {
     const { id } = useParams();
-    const navigate = useNavigate();
     const dispatch = useDispatch();
     const [selectedImage, setSelectedImage] = useState(0);
     const [quantity, setQuantity] = useState(1);
@@ -48,7 +47,6 @@ export default function ProductDetailPage() {
         });
         // Update Redux state
         dispatch(addToCart({ ...product, qty: quantity }));
-        navigate("/cart");
     };
 
     const handleToggleWishlist = async () => {

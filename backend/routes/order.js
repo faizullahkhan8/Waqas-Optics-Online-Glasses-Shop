@@ -35,7 +35,7 @@ const orderValidation = [
 // Protected routes
 router.route("/new").post(isAuthenticatedUser, orderValidation, createOrder);
 router.route("/:id").get(isAuthenticatedUser, getSingleOrder);
-router.route("/me").get(isAuthenticatedUser, myOrders);
+router.route("/user/all").get(isAuthenticatedUser, myOrders);
 
 // Admin routes
 router

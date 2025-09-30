@@ -64,7 +64,7 @@ export default function HomePage() {
                             <div className="relative">
                                 <div className="absolute inset-0 bg-gradient-to-tr from-gray-100 to-transparent rounded-3xl transform rotate-3"></div>
                                 <img
-                                    src="https://images.unsplash.com/photo-1520975910767-7b38f9909f8c?w=1200&q=80"
+                                    src="https://images.unsplash.com/photo-1556015048-4d3aa10df74c?w=800&q=80"
                                     alt="Elegant glasses"
                                     loading="lazy"
                                     className="relative rounded-3xl shadow-2xl transform -rotate-3 hover:rotate-0 transition-transform duration-500"
@@ -125,15 +125,15 @@ export default function HomePage() {
                         {[
                             {
                                 name: "Men",
-                                image: "https://images.unsplash.com/photo-1534030347209-467a5b0ad3e6?w=500&q=80",
+                                image: "https://plus.unsplash.com/premium_photo-1672239496290-5061cfee7ebb?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8ODF8fGdsYXNzZXMlMjBmcmFtZXxlbnwwfHwwfHx8MA%3D%3D",
                             },
                             {
                                 name: "Women",
-                                image: "https://images.unsplash.com/photo-1544960875-984725584275?w=500&q=80",
+                                image: "https://plus.unsplash.com/premium_photo-1661288488124-9baded1a1335?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                             },
                             {
                                 name: "Kids",
-                                image: "https://images.unsplash.com/photo-1544960875-984725584275?w=500&q=80",
+                                image: "https://plus.unsplash.com/premium_photo-1661400204229-5c93a900e35b?q=80&w=908&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                             },
                             {
                                 name: "Sunglasses",

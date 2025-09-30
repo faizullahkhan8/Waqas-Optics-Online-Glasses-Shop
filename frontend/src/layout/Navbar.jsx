@@ -8,10 +8,9 @@ import {
     ShoppingBagIcon,
     UserIcon,
     GlobeAltIcon,
-    Bars3Icon,
-    XMarkIcon,
     ChevronDownIcon,
     CameraIcon,
+    BuildingStorefrontIcon,
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
 
@@ -233,7 +232,7 @@ export default function Navbar() {
                                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                         }`}
                     >
-                        <Bars3Icon className="w-6 h-6 mb-1" />
+                        <BuildingStorefrontIcon className="w-6 h-6 mb-1" />
                         <span className="text-xs font-medium">Shop</span>
                     </Link>
 

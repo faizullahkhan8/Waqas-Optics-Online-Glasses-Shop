@@ -1,30 +1,45 @@
 import { useState } from "react";
-import { useSelector } from "react-redux";
+import {
+    useDeleteAddress,
+    useProfile,
+    useUpdateAddress,
+} from "../../hooks/useAuth";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function Addresses() {
-    const user = useSelector((state) => state.user);
     const [showAddForm, setShowAddForm] = useState(false);
     const [editingAddress, setEditingAddress] = useState(null);
+    const queryClient = useQueryClient();
 
-    // Mock addresses - in real app, this would come from API
-    const [addresses, setAddresses] = useState(user?.addresses || []);
+    // Custom hook for updating address
+    const { mutate: updateAddress } = useUpdateAddress({
+        onSuccess: () => {
+            queryClient.invalidateQueries(["profile"]);
+        },
+    });
+    const { mutate: deleteAddress } = useDeleteAddress({
+        onSuccess: () => {
+            queryClient.invalidateQueries(["profile"]);
+        },
+    });
+
+    const { data: profileData } = useProfile();
+    const addresses = profileData?.addresses || [];
+
+    console.log(addresses);
 
     const handleAddAddress = (newAddress) => {
-        setAddresses([...addresses, { ...newAddress, id: Date.now() }]);
+        updateAddress(newAddress); // Call the mutation to update address in backend
         setShowAddForm(false);
     };
 
     const handleEditAddress = (updatedAddress) => {
-        setAddresses(
-            addresses.map((addr) =>
-                addr.id === updatedAddress.id ? updatedAddress : addr
-            )
-        );
+        updateAddress(updatedAddress); // Call the mutation to update address in backend
         setEditingAddress(null);
     };
 
     const handleDeleteAddress = (addressId) => {
-        setAddresses(addresses.filter((addr) => addr.id !== addressId));
+        deleteAddress(addressId); // Call the mutation to delete address in backend
     };
 
     return (
@@ -45,7 +60,7 @@ export default function Addresses() {
                 <div className="space-y-4">
                     {addresses.map((address) => (
                         <div
-                            key={address.id}
+                            key={address._id}
                             className="border border-gray-200 rounded-lg p-4"
                         >
                             <div className="flex justify-between items-start">
@@ -70,7 +85,10 @@ export default function Addresses() {
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() =>
-                                            setEditingAddress(address)
+                                            setEditingAddress({
+                                                ...address,
+                                                _id: address._id,
+                                            })
                                         }
                                         className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
                                     >
@@ -78,7 +96,7 @@ export default function Addresses() {
                                     </button>
                                     <button
                                         onClick={() =>
-                                            handleDeleteAddress(address.id)
+                                            handleDeleteAddress(address._id)
                                         }
                                         className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200"
                                     >
@@ -107,8 +125,10 @@ export default function Addresses() {
             {(showAddForm || editingAddress) && (
                 <AddressForm
                     address={editingAddress}
-                    onSubmit={
-                        editingAddress ? handleEditAddress : handleAddAddress
+                    onSubmit={(data) =>
+                        editingAddress
+                            ? handleEditAddress(data)
+                            : handleAddAddress(data)
                     }
                     onCancel={() => {
                         setShowAddForm(false);
@@ -133,7 +153,8 @@ function AddressForm({ address, onSubmit, onCancel }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSubmit(address ? { ...formData, id: address.id } : formData);
+        console.log(address);
+        onSubmit(address ? { ...formData, _id: address._id } : formData);
     };
 
     const handleChange = (e) => {

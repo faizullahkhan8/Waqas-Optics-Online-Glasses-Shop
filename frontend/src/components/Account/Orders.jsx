@@ -3,6 +3,8 @@ import { useOrders } from "../../hooks/useOrders";
 export default function Orders() {
     const { data: orders, isLoading } = useOrders();
 
+    console.log(orders);
+
     if (isLoading) {
         return (
             <div className="bg-white rounded-xl shadow-sm p-6">
@@ -26,9 +28,10 @@ export default function Orders() {
                 My Orders
             </h2>
 
-            {orders && (Array.isArray(orders) ? orders.length : 0) > 0 ? (
+            {orders.orders &&
+            (Array.isArray(orders.orders) ? orders.orders.length : 0) > 0 ? (
                 <div className="space-y-4">
-                    {orders.map((order) => (
+                    {orders.orders.map((order) => (
                         <div
                             key={order._id}
                             className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
