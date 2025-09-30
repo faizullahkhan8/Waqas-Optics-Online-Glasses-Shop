@@ -2,11 +2,28 @@ import Product from "../models/product.js";
 import ErrorHandler from "../utils/errorHandler.js";
 import cloudinary from "../utils/cloudinary.js";
 import APIFeatures from "../utils/apiFeatures.js";
+import mongoose from "mongoose";
+import {
+    validateObjectId,
+    isValidObjectId,
+} from "../utils/objectIdValidator.js";
 
 // Create new product => /api/v1/admin/product/new
 export const createProduct = async (req, res, next) => {
     try {
-        req.body.createdBy = req.user.id;
+        // Ensure user is authenticated and has valid ObjectId
+        if (!req.user || !req.user._id) {
+            return next(new ErrorHandler("User authentication required", 401));
+        }
+
+        // Validate user ObjectId
+        try {
+            validateObjectId(req.user._id, "User ID");
+        } catch (error) {
+            return next(new ErrorHandler(error.message, 400));
+        }
+
+        req.body.createdBy = req.user._id;
 
         // Handle image uploads
         const images = [];
@@ -145,14 +162,26 @@ export const createProductReview = async (req, res, next) => {
     try {
         const { rating, comment, productId } = req.body;
 
+        // Validate inputs using utility functions
+        try {
+            validateObjectId(productId, "Product ID");
+            validateObjectId(req.user._id, "User ID");
+        } catch (error) {
+            return next(new ErrorHandler(error.message, 400));
+        }
+
         const review = {
-            user: req.user._id,
+            user: req.user._id, // Keep as is since it's already validated
             name: req.user.name,
             rating: Number(rating),
             comment,
         };
 
         const product = await Product.findById(productId);
+
+        if (!product) {
+            return next(new ErrorHandler("Product not found", 404));
+        }
 
         const isReviewed = product.reviews.find(
             (r) => r.user.toString() === req.user._id.toString()
@@ -162,7 +191,7 @@ export const createProductReview = async (req, res, next) => {
             product.reviews.forEach((review) => {
                 if (review.user.toString() === req.user._id.toString()) {
                     review.comment = comment;
-                    review.rating = rating;
+                    review.rating = Number(rating);
                 }
             });
         } else {

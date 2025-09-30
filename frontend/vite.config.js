@@ -8,4 +8,19 @@ export default defineConfig({
     server: {
         port: 3002,
     },
+    build: {
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    react: ["react", "react-dom"],
+                    vendor: [
+                        "axios",
+                        "@tanstack/react-query",
+                        "react-redux",
+                        "react-router-dom",
+                    ],
+                },
+            },
+        },
+    },
 });

@@ -59,6 +59,22 @@ export const useCreatePaymentIntent = () => {
 export const useVerifyCheckoutSession = () => {
     return useMutation({
         mutationFn: verifyCheckoutSession,
+        retry: (failureCount, error) => {
+            // Don't retry on 429 (rate limit) errors
+            if (error?.response?.status === 429) {
+                return false;
+            }
+            // Don't retry on 4xx client errors (except 429)
+            if (
+                error?.response?.status >= 400 &&
+                error?.response?.status < 500
+            ) {
+                return false;
+            }
+            // Retry server errors up to 1 time
+            return failureCount < 1;
+        },
+        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
     });
 };
 

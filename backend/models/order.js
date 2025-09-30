@@ -81,7 +81,7 @@ const orderSchema = new mongoose.Schema({
     },
     paidAt: {
         type: Date,
-        required: true,
+        required: false, // Make optional for COD orders
     },
     itemsPrice: {
         type: Number,

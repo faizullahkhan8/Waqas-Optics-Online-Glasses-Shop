@@ -65,15 +65,27 @@ export default function CartPage() {
                             Shopping Cart
                         </h1>
                         <p className="mt-4 text-gray-600">
-                            {cart.length === 0
+                            {(Array.isArray(cart)
+                                ? cart.length
+                                : cart?.items?.length || 0) === 0
                                 ? "Your cart is empty"
-                                : `${cart.length} ${
-                                      cart.length === 1 ? "item" : "items"
+                                : `${
+                                      Array.isArray(cart)
+                                          ? cart.length
+                                          : cart?.items?.length || 0
+                                  } ${
+                                      (Array.isArray(cart)
+                                          ? cart.length
+                                          : cart?.items?.length || 0) === 1
+                                          ? "item"
+                                          : "items"
                                   } in your cart`}
                         </p>
                     </div>
 
-                    {cart.length === 0 ? (
+                    {(Array.isArray(cart)
+                        ? cart.length
+                        : cart?.items?.length || 0) === 0 ? (
                         <div className="max-w-md mx-auto text-center bg-white rounded-2xl p-8 shadow-sm">
                             <p className="text-gray-600 mb-6">
                                 Your shopping cart is empty. Discover our
@@ -113,10 +125,10 @@ export default function CartPage() {
                                                 <div className="flex justify-between items-start gap-4">
                                                     <div>
                                                         <Link
-                                                            to={`/product/${item.slug}`}
+                                                            to={`/product/${item._id}`}
                                                             className="block font-serif text-lg text-gray-900 hover:text-gray-600 transition-colors"
                                                         >
-                                                            {item.title}
+                                                            {item.name}
                                                         </Link>
                                                         <p className="mt-1 text-gray-600">
                                                             $

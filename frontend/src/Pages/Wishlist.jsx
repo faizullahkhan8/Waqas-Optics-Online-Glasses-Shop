@@ -4,10 +4,16 @@ import ProductGrid from "../components/Product/ProductGrid";
 import Button from "../components/UI/Button";
 import { Link } from "react-router-dom";
 import { useWishlist } from "../hooks/useWishlist";
+import { useDispatch } from "react-redux";
 
 export default function WishlistPage() {
     const { data: wishlistData, isLoading } = useWishlist();
+    const dispatch = useDispatch();
     const wishlist = wishlistData?.items || wishlistData || [];
+    dispatch({
+        type: "wishlist/setWishlist",
+        payload: wishlist.map((item) => item.product),
+    });
 
     return (
         <main>
@@ -32,7 +38,9 @@ export default function WishlistPage() {
                                 Loading your wishlist...
                             </h2>
                         </div>
-                    ) : wishlist.length === 0 ? (
+                    ) : (Array.isArray(wishlist)
+                          ? wishlist.length
+                          : wishlist?.items?.length || 0) === 0 ? (
                         <div className="max-w-xl mx-auto bg-white rounded-xl shadow-sm p-10 text-center">
                             <div className="text-5xl mb-4">💖</div>
                             <h2 className="text-xl font-semibold text-gray-900 mb-2">
@@ -41,16 +49,17 @@ export default function WishlistPage() {
                             <p className="text-gray-600 mb-6">
                                 Browse our shop and add products you love!
                             </p>
-                            <Button
-                                as={Link}
+                            <Link
                                 to="/shop"
-                                className="bg-gray-900 text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors"
+                                className="inline-block px-8 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
                             >
                                 Go to Shop
-                            </Button>
+                            </Link>
                         </div>
                     ) : (
-                        <ProductGrid products={wishlist} />
+                        <ProductGrid
+                            products={wishlist.map((item) => item.product)}
+                        />
                     )}
                 </Container>
             </section>

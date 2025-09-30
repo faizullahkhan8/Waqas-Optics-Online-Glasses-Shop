@@ -140,7 +140,7 @@ export const updateCartItem = async (req, res, next) => {
 // Remove item from cart => /api/v1/cart/remove
 export const removeFromCart = async (req, res, next) => {
     try {
-        const { productId } = req.params;
+        const { id: productId } = req.params;
 
         const cart = await Cart.findOne({ user: req.user._id });
         if (!cart) {
@@ -151,7 +151,7 @@ export const removeFromCart = async (req, res, next) => {
             (item) => item.product.toString() !== productId.toString()
         );
 
-        await cart.save();
+        await cart.save({ validateModifiedOnly: true });
 
         res.status(200).json({
             success: true,

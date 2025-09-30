@@ -55,6 +55,7 @@ export const addToWishlist = async (req, res, next) => {
             message: "Item added to wishlist",
         });
     } catch (error) {
+        console.log(error);
         next(error);
     }
 };

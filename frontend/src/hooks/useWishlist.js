@@ -28,7 +28,7 @@ export const useAddToWishlist = () => {
             queryClient.invalidateQueries({
                 queryKey: wishlistKeys.wishlist(),
             });
-            toast.success(`${data.product?.title || "Item"} added to wishlist`);
+            toast.success(data.message);
         },
         onError: (error) => {
             toast.error(

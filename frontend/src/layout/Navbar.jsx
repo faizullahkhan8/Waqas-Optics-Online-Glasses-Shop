@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import Container from "../components/UI/Container";
 import { useSelector, useDispatch } from "react-redux";
 import { clearUser } from "../store/userSlice";
@@ -7,25 +7,30 @@ import {
     HeartIcon,
     ShoppingBagIcon,
     UserIcon,
-    ShoppingCartIcon,
     GlobeAltIcon,
     Bars3Icon,
     XMarkIcon,
     ChevronDownIcon,
+    CameraIcon,
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
 
 import { useState, useEffect, useRef } from "react";
+import { useLogout } from "../hooks/useAuth";
 
 export default function Navbar() {
     const cart = useSelector((state) => state.cart);
     const wishlist = useSelector((state) => state.wishlist);
     const user = useSelector((state) => state.user);
     const dispatch = useDispatch();
-    const itemsInCart = cart.reduce((s, i) => s + i.qty, 0);
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const location = useLocation();
+    const itemsInCart = Array.isArray(cart)
+        ? cart.length
+        : cart?.items?.length || 0;
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const userMenuRef = useRef(null);
+
+    const logout = useLogout();
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -45,15 +50,16 @@ export default function Navbar() {
 
     const handleLogout = async () => {
         try {
-            // Call logout API if needed
-            // await logoutUser();
+            await logout.mutateAsync();
             dispatch(clearUser());
             setUserMenuOpen(false);
-            setMobileMenuOpen(false);
         } catch (error) {
             console.error("Logout error:", error);
         }
     };
+
+    // Helper function to check if route is active
+    const isActive = (path) => location.pathname === path;
     return (
         <header className="bg-white shadow-md sticky top-0 z-40 border-b border-gray-100">
             <Container className="py-4 flex items-center justify-between">
@@ -72,25 +78,18 @@ export default function Navbar() {
                     </div>
                 </Link>
 
-                {/* Hamburger for mobile */}
-                <button
-                    type="button"
-                    className="lg:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-100 focus:outline-none"
-                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                >
-                    <span className="sr-only">Open main menu</span>
-                    {mobileMenuOpen ? (
-                        <XMarkIcon
-                            className="block h-6 w-6"
-                            aria-hidden="true"
-                        />
+                {/* Mobile: Show search icon or user icon */}
+                <div className="lg:hidden flex items-center gap-2">
+                    {user ? (
+                        <Link to="/account" className="p-2">
+                            <UserIcon className="w-6 h-6 text-gray-600" />
+                        </Link>
                     ) : (
-                        <Bars3Icon
-                            className="block h-6 w-6"
-                            aria-hidden="true"
-                        />
+                        <Link to="/login" className="p-2">
+                            <UserIcon className="w-6 h-6 text-gray-600" />
+                        </Link>
                     )}
-                </button>
+                </div>
 
                 {/* Desktop Nav */}
                 <nav className="hidden lg:flex flex-1 mx-12">
@@ -138,14 +137,14 @@ export default function Navbar() {
                         className="relative group"
                         aria-label="Wishlist"
                     >
-                        {wishlist.length > 0 ? (
+                        {(wishlist?.items?.length || 0) > 0 ? (
                             <HeartSolidIcon className="w-6 h-6 text-red-500 transition-transform group-hover:scale-110" />
                         ) : (
                             <HeartIcon className="w-6 h-6 text-gray-600 transition-transform group-hover:scale-110" />
                         )}
-                        {wishlist.length > 0 && (
+                        {(wishlist?.items?.length || 0) > 0 && (
                             <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
-                                {wishlist.length}
+                                {wishlist?.items?.length || 0}
                             </span>
                         )}
                     </Link>
@@ -209,134 +208,94 @@ export default function Navbar() {
                 </div>
             </Container>
 
-            {/* Mobile Nav Drawer */}
-            {mobileMenuOpen && (
-                <div className="lg:hidden fixed inset-0 z-50">
-                    <div
-                        className="fixed inset-0 bg-black bg-opacity-25"
-                        onClick={() => setMobileMenuOpen(false)}
-                    />
-                    <nav className="fixed top-0 right-0 bottom-0 w-64 bg-white shadow-xl">
-                        <div className="px-4 pt-6 pb-4 flex flex-col h-full">
-                            <div className="flex items-center justify-between mb-8">
-                                <div className="font-serif font-semibold">
-                                    Menu
-                                </div>
-                                <button
-                                    type="button"
-                                    className="p-2 rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-                                    onClick={() => setMobileMenuOpen(false)}
-                                >
-                                    <XMarkIcon className="w-6 h-6" />
-                                </button>
-                            </div>
-                            <ul className="flex flex-col gap-4">
-                                <li>
-                                    <Link
-                                        to="/shop"
-                                        className="block text-gray-700 hover:text-gray-900 font-medium tracking-wide py-2"
-                                        onClick={() => setMobileMenuOpen(false)}
-                                    >
-                                        Shop
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link
-                                        to="/virtual-try-on"
-                                        className="block text-gray-700 hover:text-gray-900 font-medium tracking-wide py-2"
-                                        onClick={() => setMobileMenuOpen(false)}
-                                    >
-                                        Virtual Try-On
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link
-                                        to="/about"
-                                        className="block text-gray-700 hover:text-gray-900 font-medium tracking-wide py-2"
-                                        onClick={() => setMobileMenuOpen(false)}
-                                    >
-                                        About
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link
-                                        to="/contact"
-                                        className="block text-gray-700 hover:text-gray-900 font-medium tracking-wide py-2"
-                                        onClick={() => setMobileMenuOpen(false)}
-                                    >
-                                        Contact
-                                    </Link>
-                                </li>
-                            </ul>
-                            <div className="mt-auto pt-6 border-t">
-                                <div className="flex items-center justify-around">
-                                    <Link
-                                        to="/wishlist"
-                                        className="relative group"
-                                        onClick={() => setMobileMenuOpen(false)}
-                                    >
-                                        {wishlist.length > 0 ? (
-                                            <HeartSolidIcon className="w-6 h-6 text-red-500" />
-                                        ) : (
-                                            <HeartIcon className="w-6 h-6 text-gray-600" />
-                                        )}
-                                        {wishlist.length > 0 && (
-                                            <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
-                                                {wishlist.length}
-                                            </span>
-                                        )}
-                                    </Link>
-                                    <Link
-                                        to="/cart"
-                                        className="relative group"
-                                        onClick={() => setMobileMenuOpen(false)}
-                                    >
-                                        <ShoppingBagIcon className="w-6 h-6 text-gray-600" />
-                                        {itemsInCart > 0 && (
-                                            <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-gray-900 text-white text-xs flex items-center justify-center">
-                                                {itemsInCart}
-                                            </span>
-                                        )}
-                                    </Link>
-                                    {user ? (
-                                        <div className="flex flex-col items-center gap-2">
-                                            <Link
-                                                to="/account"
-                                                className="flex items-center gap-2 text-gray-700 hover:text-gray-900 font-medium"
-                                                onClick={() =>
-                                                    setMobileMenuOpen(false)
-                                                }
-                                            >
-                                                <span className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                                                    <UserIcon className="w-5 h-5" />
-                                                </span>
-                                            </Link>
-                                            <button
-                                                onClick={handleLogout}
-                                                className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1"
-                                            >
-                                                Logout
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <Link
-                                            to="/login"
-                                            className="flex items-center gap-2 text-gray-700 hover:text-gray-900 font-medium"
-                                            onClick={() =>
-                                                setMobileMenuOpen(false)
-                                            }
-                                        >
-                                            <span className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                                                <UserIcon className="w-5 h-5" />
-                                            </span>
-                                        </Link>
-                                    )}
-                                </div>
-                            </div>
+            {/* Mobile Bottom Navigation */}
+            <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg">
+                <div className="flex justify-around items-center py-2 px-1">
+                    {/* Home */}
+                    <Link
+                        to="/"
+                        className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg transition-colors ${
+                            isActive("/")
+                                ? "text-gray-900 bg-gray-100"
+                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        }`}
+                    >
+                        <GlobeAltIcon className="w-6 h-6 mb-1" />
+                        <span className="text-xs font-medium">Home</span>
+                    </Link>
+
+                    {/* Shop */}
+                    <Link
+                        to="/shop"
+                        className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg transition-colors ${
+                            isActive("/shop")
+                                ? "text-gray-900 bg-gray-100"
+                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        }`}
+                    >
+                        <Bars3Icon className="w-6 h-6 mb-1" />
+                        <span className="text-xs font-medium">Shop</span>
+                    </Link>
+
+                    {/* virtual try-on */}
+                    <Link
+                        to="/virtual-try-on"
+                        className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg transition-colors ${
+                            isActive("/virtual-try-on")
+                                ? "text-gray-900 bg-gray-100"
+                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        }`}
+                    >
+                        <CameraIcon className="w-6 h-6 mb-1" />
+                        <span className="text-xs font-medium">
+                            Virtual Try-On
+                        </span>
+                    </Link>
+
+                    {/* Wishlist */}
+                    <Link
+                        to="/wishlist"
+                        className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg transition-colors relative ${
+                            isActive("/wishlist")
+                                ? "text-red-500 bg-red-50"
+                                : "text-gray-600 hover:text-red-500 hover:bg-red-50"
+                        }`}
+                    >
+                        <div className="relative">
+                            {(wishlist?.items?.length || 0) > 0 ? (
+                                <HeartSolidIcon className="w-6 h-6 mb-1" />
+                            ) : (
+                                <HeartIcon className="w-6 h-6 mb-1" />
+                            )}
+                            {(wishlist?.items?.length || 0) > 0 && (
+                                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
+                                    {wishlist?.items?.length || 0}
+                                </span>
+                            )}
                         </div>
-                    </nav>
+                        <span className="text-xs font-medium">Wishlist</span>
+                    </Link>
+
+                    <Link
+                        to="/cart"
+                        className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg transition-colors relative ${
+                            isActive("/cart")
+                                ? "text-gray-900 bg-gray-100"
+                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        }`}
+                    >
+                        <div className="relative">
+                            <ShoppingBagIcon className="w-6 h-6 mb-1" />
+                            {itemsInCart > 0 && (
+                                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
+                                    {itemsInCart}
+                                </span>
+                            )}
+                        </div>
+                        <span className="text-xs font-medium">Cart</span>
+                    </Link>
                 </div>
-            )}
+            </nav>
         </header>
     );
 }

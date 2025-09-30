@@ -41,7 +41,10 @@ export default function Wishlist() {
                 My Wishlist
             </h2>
 
-            {wishlist && wishlist.length > 0 ? (
+            {wishlist &&
+            (Array.isArray(wishlist)
+                ? wishlist.length
+                : wishlist?.items?.length || 0) > 0 ? (
                 <div className="grid gap-6">
                     {wishlist.map((product) => (
                         <div

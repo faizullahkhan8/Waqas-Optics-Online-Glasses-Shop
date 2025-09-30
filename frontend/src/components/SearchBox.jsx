@@ -20,7 +20,7 @@ const SearchBox = () => {
             p.title.toLowerCase().includes(q.toLowerCase())
         ).slice(0, 5);
         setSuggestions(s);
-        setOpen(s.length > 0);
+        setOpen((Array.isArray(s) ? s.length : 0) > 0);
     }, [q]);
 
     // Close dropdown on outside click
@@ -89,61 +89,64 @@ const SearchBox = () => {
                 </div>
             </div>
 
-            {open && suggestions.length > 0 && (
-                <div className="absolute left-0 right-0 top-full mt-2 z-20">
-                    <div className="bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden">
-                        <ul className="py-2 max-h-[300px] overflow-y-auto">
-                            {suggestions.map((s) => (
-                                <li key={s.id}>
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            handleSelect(`/product/${s.slug}`)
-                                        }
-                                        className="flex items-center gap-3 px-4 py-2 w-full text-left hover:bg-gray-50 transition-colors"
-                                    >
-                                        <div className="w-10 h-10 rounded bg-gray-100 flex-shrink-0 overflow-hidden">
-                                            <img
-                                                src={
-                                                    s.images?.[0] ||
-                                                    "/placeholder-product.svg"
-                                                }
-                                                alt=""
-                                                className="w-full h-full object-cover"
-                                                loading="lazy"
-                                            />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="text-sm font-medium text-gray-900 truncate">
-                                                {s.title}
+            {open &&
+                (Array.isArray(suggestions) ? suggestions.length : 0) > 0 && (
+                    <div className="absolute left-0 right-0 top-full mt-2 z-20">
+                        <div className="bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden">
+                            <ul className="py-2 max-h-[300px] overflow-y-auto">
+                                {suggestions.map((s) => (
+                                    <li key={s.id}>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                handleSelect(
+                                                    `/product/${s.slug}`
+                                                )
+                                            }
+                                            className="flex items-center gap-3 px-4 py-2 w-full text-left hover:bg-gray-50 transition-colors"
+                                        >
+                                            <div className="w-10 h-10 rounded bg-gray-100 flex-shrink-0 overflow-hidden">
+                                                <img
+                                                    src={
+                                                        s.images?.[0] ||
+                                                        "/placeholder-product.svg"
+                                                    }
+                                                    alt=""
+                                                    className="w-full h-full object-cover"
+                                                    loading="lazy"
+                                                />
                                             </div>
-                                            <div className="text-sm text-gray-500">
-                                                ${s.price.toFixed(2)}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-sm font-medium text-gray-900 truncate">
+                                                    {s.title}
+                                                </div>
+                                                <div className="text-sm text-gray-500">
+                                                    ${s.price.toFixed(2)}
+                                                </div>
                                             </div>
-                                        </div>
-                                    </button>
-                                </li>
-                            ))}
-                            {q && (
-                                <li className="px-4 py-2 border-t border-gray-100">
-                                    <button
-                                        onClick={() =>
-                                            handleSelect(
-                                                `/shop?q=${encodeURIComponent(
-                                                    q
-                                                )}`
-                                            )
-                                        }
-                                        className="w-full text-left text-sm text-gray-600 hover:text-gray-900"
-                                    >
-                                        View all results for "{q}"...
-                                    </button>
-                                </li>
-                            )}
-                        </ul>
+                                        </button>
+                                    </li>
+                                ))}
+                                {q && (
+                                    <li className="px-4 py-2 border-t border-gray-100">
+                                        <button
+                                            onClick={() =>
+                                                handleSelect(
+                                                    `/shop?q=${encodeURIComponent(
+                                                        q
+                                                    )}`
+                                                )
+                                            }
+                                            className="w-full text-left text-sm text-gray-600 hover:text-gray-900"
+                                        >
+                                            View all results for "{q}"...
+                                        </button>
+                                    </li>
+                                )}
+                            </ul>
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
         </div>
     );
 };

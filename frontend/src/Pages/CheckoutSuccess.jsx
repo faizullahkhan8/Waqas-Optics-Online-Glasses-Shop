@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { clearCart } from "../store/cartSlice";
@@ -10,8 +10,10 @@ export default function CheckoutSuccessPage() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const dispatch = useDispatch();
+
     const [isVerifying, setIsVerifying] = useState(true);
     const [error, setError] = useState(null);
+    const hasVerified = useRef(false);
 
     const sessionId = searchParams.get("session_id");
     const verifySessionMutation = useVerifyCheckoutSession();
@@ -22,22 +24,26 @@ export default function CheckoutSuccessPage() {
             return;
         }
 
-        // Verify the checkout session and create the order
-        verifySessionMutation.mutate(sessionId, {
-            onSuccess: (data) => {
-                // Clear the cart and redirect to thank you page
+        // Prevent multiple API calls
+        if (hasVerified.current) {
+            return;
+        }
+        hasVerified.current = true;
+
+        (async () => {
+            try {
+                const data = await verifySessionMutation.mutateAsync(sessionId);
                 dispatch(clearCart());
                 navigate(`/thank-you?order=${data.orderId}`);
-            },
-            onError: (err) => {
-                console.error("Session verification failed:", err);
+            } catch (err) {
                 setError(
                     err?.response?.data?.message ||
                         "Payment verification failed"
                 );
+            } finally {
                 setIsVerifying(false);
-            },
-        });
+            }
+        })();
     }, [sessionId, navigate, dispatch, verifySessionMutation]);
 
     if (isVerifying) {
@@ -104,6 +110,5 @@ export default function CheckoutSuccessPage() {
         );
     }
 
-    // This should not be reached normally
     return null;
 }

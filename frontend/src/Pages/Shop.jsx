@@ -145,7 +145,7 @@ export default function ShopPage() {
                             <div className="flex items-center space-x-2">
                                 <div className="w-8 h-px bg-gray-300"></div>
                                 <span className="font-medium tracking-wide">
-                                    {filteredProducts.length}
+                                    {filteredProducts?.length}
                                     <span className="ml-1 font-light">
                                         elegant pieces
                                     </span>
@@ -168,7 +168,7 @@ export default function ShopPage() {
                     {/* Mobile Filters Button - Enhanced */}
                     <div className="mb-8 flex lg:hidden justify-between items-center border-b border-gray-100 pb-6">
                         <div className="text-sm text-gray-600 font-medium">
-                            {filteredProducts.length} Products Found
+                            {filteredProducts?.length} Products Found
                         </div>
                         <Button
                             className="group px-6 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-all duration-300 shadow-sm hover:shadow-md flex items-center space-x-2"
@@ -721,7 +721,7 @@ export default function ShopPage() {
                                 <div className="hidden lg:flex items-center justify-between border-b border-gray-100 pb-6">
                                     <div className="text-gray-600">
                                         <span className="font-medium text-gray-900">
-                                            {filteredProducts.length}
+                                            {filteredProducts?.length}
                                         </span>
                                         <span className="ml-1">
                                             products found

@@ -36,7 +36,7 @@ export const useSearchProducts = (query, filters = {}) => {
     return useQuery({
         queryKey: productKeys.search({ query, ...filters }),
         queryFn: () => productApi.searchProducts(query, filters),
-        enabled: !!query && query.length > 2,
+        enabled: !!query && (typeof query === "string" ? query.length : 0) > 2,
     });
 };
 

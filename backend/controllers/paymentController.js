@@ -234,13 +234,13 @@ export const verifyCheckoutSession = async (req, res, next) => {
             const product = await Product.findById(item.product);
             if (product) {
                 product.stock -= item.quantity;
-                await product.save();
+                await product.save({ validateModifiedOnly: true });
             }
         }
 
         // Clear cart
         cart.items = [];
-        await cart.save();
+        await cart.save({ validateModifiedOnly: true });
 
         res.status(201).json({
             success: true,

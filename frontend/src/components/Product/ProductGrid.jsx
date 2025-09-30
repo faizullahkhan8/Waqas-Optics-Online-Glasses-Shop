@@ -30,21 +30,23 @@ export default function ProductGrid({ products, isLoading = false }) {
 
     return (
         <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 max-w-7xl mx-auto">
-            {products.map((product, index) => (
-                <div
-                    key={index}
-                    className={`transform transition-all duration-500 ${
-                        mounted
-                            ? "translate-y-0 opacity-100"
-                            : "translate-y-4 opacity-0"
-                    }`}
-                    style={{
-                        transitionDelay: `${index * 100}ms`,
-                    }}
-                >
-                    <ProductCard product={product} />
-                </div>
-            ))}
+            {products.map((product, index) => {
+                return (
+                    <div
+                        key={index}
+                        className={`transform transition-all duration-500 ${
+                            mounted
+                                ? "translate-y-0 opacity-100"
+                                : "translate-y-4 opacity-0"
+                        }`}
+                        style={{
+                            transitionDelay: `${index * 100}ms`,
+                        }}
+                    >
+                        <ProductCard product={product} />
+                    </div>
+                );
+            })}
         </div>
     );
 }

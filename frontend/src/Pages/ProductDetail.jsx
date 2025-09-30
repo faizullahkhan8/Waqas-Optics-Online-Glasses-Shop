@@ -100,7 +100,7 @@ export default function ProductDetailPage() {
                                         />
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent"></div>
                                     </div>
-                                    {product.images.length > 1 && (
+                                    {(product?.images?.length || 0) > 1 && (
                                         <div className="p-6 border-t border-gray-100">
                                             <div className="flex gap-4 overflow-x-auto custom-scrollbar">
                                                 {product.images.map(

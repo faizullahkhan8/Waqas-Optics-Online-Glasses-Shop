@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { Helmet } from "react-helmet";
 import Container from "../components/UI/Container";
 import LoginPage from "./Login";
@@ -8,10 +8,15 @@ import Orders from "../components/Account/Orders";
 import Addresses from "../components/Account/Addresses";
 import Wishlist from "../components/Account/Wishlist";
 import Settings from "../components/Account/Settings";
+import Button from "../components/UI/Button";
+import { useLogout } from "../hooks/useAuth";
+import { clearUser } from "../store/userSlice";
 
 export default function AccountPage() {
     const user = useSelector((state) => state.user);
     const [activeSection, setActiveSection] = useState("Dashboard");
+    const dispatch = useDispatch();
+    const logout = useLogout();
 
     if (!user) return <LoginPage />;
 
@@ -70,7 +75,7 @@ export default function AccountPage() {
                                         </div>
                                     </div>
 
-                                    <nav className="space-y-2">
+                                    <nav className="space-y-2 mb-6">
                                         {sections.map((section) => (
                                             <button
                                                 key={section.label}
@@ -90,6 +95,21 @@ export default function AccountPage() {
                                             </button>
                                         ))}
                                     </nav>
+                                    <Button
+                                        className="w-full bg-red-600 text-white hover:bg-red-700"
+                                        onClick={() => {
+                                            logout.mutate(undefined, {
+                                                onSuccess: () => {
+                                                    dispatch(clearUser());
+                                                },
+                                                onError: () => {
+                                                    dispatch(clearUser());
+                                                },
+                                            });
+                                        }}
+                                    >
+                                        Logout
+                                    </Button>
                                 </div>
                             </div>
 

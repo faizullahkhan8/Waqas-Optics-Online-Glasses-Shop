@@ -8,6 +8,15 @@ export const createOrder = async (req, res, next) => {
     try {
         const { shippingInfo, paymentInfo } = req.body;
 
+        if (!shippingInfo || !paymentInfo) {
+            return next(
+                new ErrorHandler(
+                    "Shipping info and payment info are required",
+                    400
+                )
+            );
+        }
+
         const cart = await Cart.findOne({ user: req.user._id });
         if (!cart || cart.items.length === 0) {
             return next(new ErrorHandler("Cart is empty", 400));
@@ -28,7 +37,27 @@ export const createOrder = async (req, res, next) => {
         const shippingPrice = itemsPrice > 200 ? 0 : 25; // Free shipping over $200
         const totalPrice = itemsPrice + taxPrice + shippingPrice;
 
-        const order = await Order.create({
+        // Determine payment status and paidAt based on payment type
+        const isCOD = paymentInfo.id && paymentInfo.id.startsWith("COD-");
+        let paymentStatus, paidAt;
+        if (isCOD) {
+            paymentStatus = "pending";
+            paidAt = null;
+        } else {
+            // For Stripe, only allow order creation if payment is verified as paid
+            if (paymentInfo.status !== "paid") {
+                return next(
+                    new ErrorHandler(
+                        "Stripe payment not verified as paid. Order not created.",
+                        400
+                    )
+                );
+            }
+            paymentStatus = "paid";
+            paidAt = Date.now();
+        }
+
+        const orderData = {
             shippingInfo,
             orderItems: cart.items,
             itemsPrice,
@@ -36,24 +65,39 @@ export const createOrder = async (req, res, next) => {
             shippingPrice,
             totalPrice,
             paymentInfo,
-            paidAt: Date.now(),
+            paymentStatus,
             user: req.user._id,
-        });
+            orderStatus: "Processing",
+        };
+        if (!isCOD) {
+            orderData.paidAt = paidAt;
+        }
+
+        // Only set paidAt if payment is completed (not COD)
+        if (!isCOD) {
+            orderData.paidAt = paidAt;
+        }
+
+        const order = await Order.create(orderData);
 
         // Update stock
         for (const item of order.orderItems) {
-            const product = await Product.findById(item.product);
+            const productId = item.product;
+
+            const product = await Product.findById(productId);
+
             product.stock -= item.quantity;
-            await product.save();
+            await product.save({ validateModifiedOnly: true });
         }
 
         // Clear cart
         cart.items = [];
         await cart.save();
 
-        res.status(201).json({
+        return res.status(201).json({
             success: true,
             order,
+            orderId: order._id,
         });
     } catch (error) {
         next(error);

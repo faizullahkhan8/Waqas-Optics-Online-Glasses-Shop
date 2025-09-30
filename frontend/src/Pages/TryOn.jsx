@@ -122,7 +122,9 @@ export default function VirtualTryOnPage() {
                                                 Loading frames...
                                             </p>
                                         </div>
-                                    ) : glasses.length === 0 ? (
+                                    ) : (Array.isArray(glasses)
+                                          ? glasses.length
+                                          : 0) === 0 ? (
                                         <div className="text-center py-8 text-gray-500">
                                             No frames available
                                         </div>

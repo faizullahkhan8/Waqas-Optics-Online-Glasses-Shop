@@ -48,7 +48,7 @@ export default function ProductCard({ product }) {
                 >
                     <img
                         src={product.images?.[0] || "/placeholder-product.svg"}
-                        alt={product?.title || "Product"}
+                        alt={product?.name || "Product"}
                         className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out"
                         loading="lazy"
                     />
@@ -56,7 +56,7 @@ export default function ProductCard({ product }) {
                 <Button
                     onClick={handleToggleWishlist}
                     aria-label={`Toggle wishlist for ${
-                        product?.title || "Product"
+                        product?.name || "Product"
                     }`}
                     className={`absolute top-3 right-3 sm:top-4 sm:right-4 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/90 backdrop-blur-sm shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 ${
                         isInWishlist
@@ -76,7 +76,7 @@ export default function ProductCard({ product }) {
                             id={`p-${product?._id || "unknown"}`}
                             className="font-serif text-base sm:text-lg text-gray-900 group-hover:text-gray-600 transition-colors duration-300 line-clamp-2"
                         >
-                            {product?.title || "Untitled Product"}
+                            {product?.name || "Untitled Product"}
                         </h3>
                     </div>
                     <div className="flex items-center gap-2">
@@ -94,9 +94,7 @@ export default function ProductCard({ product }) {
                     <Button
                         className="w-full px-4 py-2.5 sm:px-6 sm:py-3 bg-gray-900 text-white hover:bg-gray-800 transition-colors duration-300 rounded-lg font-medium text-sm sm:text-base"
                         onClick={handleAddToCart}
-                        aria-label={`Add ${
-                            product?.title || "Product"
-                        } to cart`}
+                        aria-label={`Add ${product?.name || "Product"} to cart`}
                     >
                         Add to Cart
                     </Button>

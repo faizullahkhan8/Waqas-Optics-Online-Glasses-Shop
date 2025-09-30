@@ -13,7 +13,7 @@ export const wishlistApi = {
         const { data } = await api.post("/additional/wishlist", {
             productId,
         });
-        return data.wishlist;
+        return data;
     },
 
     // Remove product from wishlist

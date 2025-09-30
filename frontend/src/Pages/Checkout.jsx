@@ -117,7 +117,9 @@ export default function CheckoutPage() {
             onSuccess: (res) => {
                 dispatch(clearCart());
                 navigate(
-                    `/thank-you?order=${res.data.orderId || res.data._id}`
+                    `/thank-you?order=${
+                        res.orderId || res.order?._id || res._id
+                    }`
                 );
             },
             onError: (err) => {
@@ -423,7 +425,7 @@ export default function CheckoutPage() {
                                     <div className="divide-y divide-gray-100">
                                         {cart.map((item) => (
                                             <div
-                                                key={item.id}
+                                                key={item._id}
                                                 className="py-4 flex items-center gap-4"
                                             >
                                                 <div className="w-16 h-16 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">

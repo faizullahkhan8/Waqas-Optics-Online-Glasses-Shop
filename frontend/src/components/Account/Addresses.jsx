@@ -41,7 +41,7 @@ export default function Addresses() {
                 </button>
             </div>
 
-            {addresses.length > 0 ? (
+            {(Array.isArray(addresses) ? addresses.length : 0) > 0 ? (
                 <div className="space-y-4">
                     {addresses.map((address) => (
                         <div

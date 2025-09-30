@@ -26,7 +26,7 @@ export default function Orders() {
                 My Orders
             </h2>
 
-            {orders && orders.length > 0 ? (
+            {orders && (Array.isArray(orders) ? orders.length : 0) > 0 ? (
                 <div className="space-y-4">
                     {orders.map((order) => (
                         <div
