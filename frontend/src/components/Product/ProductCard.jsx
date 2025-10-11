@@ -47,7 +47,10 @@ export default function ProductCard({ product }) {
                     className="block aspect-[4/5] sm:aspect-[4/5] overflow-hidden bg-gray-100"
                 >
                     <img
-                        src={product.images?.[0] || "/placeholder-product.svg"}
+                        src={
+                            product.images?.[0] ||
+                            "/images/products/placeholder-product.svg"
+                        }
                         alt={product?.name || "Product"}
                         className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out"
                         loading="lazy"

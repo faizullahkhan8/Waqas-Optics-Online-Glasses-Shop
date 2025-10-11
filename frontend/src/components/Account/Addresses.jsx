@@ -24,9 +24,7 @@ export default function Addresses() {
     });
 
     const { data: profileData } = useProfile();
-    const addresses = profileData?.addresses || [];
-
-    console.log(addresses);
+    const addresses = profileData?.user?.addresses || [];
 
     const handleAddAddress = (newAddress) => {
         updateAddress(newAddress); // Call the mutation to update address in backend
