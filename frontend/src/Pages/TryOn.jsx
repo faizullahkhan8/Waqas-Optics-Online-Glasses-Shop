@@ -17,7 +17,7 @@ export default function VirtualTryOnPage() {
     const webcamRef = useRef(null);
     const [mirror, setMirror] = useState(true);
 
-    // Fetch glasses products using TanStack Query
+    // Fetch glasses products for try-on
     const {
         data: glassesData,
         isLoading: loading,

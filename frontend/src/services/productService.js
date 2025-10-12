@@ -15,9 +15,9 @@ export const productApi = {
     },
 
     // Search products
-    searchProducts: async (query, filters = {}) => {
+    searchProducts: async (searchTerm, filters = {}) => {
         const { data } = await api.get("/products/search", {
-            params: { q: query, ...filters },
+            params: { q: searchTerm, ...filters },
         });
         return data;
     },

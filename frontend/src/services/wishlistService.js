@@ -5,7 +5,7 @@ export const wishlistApi = {
     // Get user's wishlist
     getWishlist: async () => {
         const { data } = await api.get("/additional/wishlist");
-        return data.wishlist;
+        return data;
     },
 
     // Add product to wishlist
@@ -19,6 +19,6 @@ export const wishlistApi = {
     // Remove product from wishlist
     removeFromWishlist: async (productId) => {
         const { data } = await api.delete(`/additional/wishlist/${productId}`);
-        return data.wishlist;
+        return data;
     },
 };

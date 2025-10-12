@@ -82,11 +82,11 @@ const PaymentForm = ({ amount, orderId, onSuccess, onError }) => {
             amount > 0 &&
             !clientSecret &&
             !paymentIntentCreated &&
-            !createPaymentMutation.isPending &&
+            !createPaymentMutation.loading &&
             timeSinceLastAttempt > 2000
         ) {
             setLastAttemptTime(now);
-            createPaymentMutation.mutate({ amount, orderId });
+            createPaymentMutation.createIntent({ amount, orderId });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [amount, orderId]);
@@ -120,7 +120,7 @@ const PaymentForm = ({ amount, orderId, onSuccess, onError }) => {
             } else if (paymentIntent.status === "succeeded") {
                 // Confirm payment on backend
                 try {
-                    await confirmPaymentMutation.mutateAsync({
+                    await confirmPaymentMutation.confirmPayment({
                         paymentIntentId: paymentIntent.id,
                         orderId,
                     });
@@ -185,7 +185,7 @@ const PaymentForm = ({ amount, orderId, onSuccess, onError }) => {
                     disabled={
                         !stripe ||
                         isProcessing ||
-                        createPaymentMutation.isPending ||
+                        createPaymentMutation.loading ||
                         !clientSecret ||
                         createPaymentMutation.error?.response?.status === 429
                     }
@@ -193,7 +193,7 @@ const PaymentForm = ({ amount, orderId, onSuccess, onError }) => {
                 >
                     {isProcessing
                         ? "Processing..."
-                        : createPaymentMutation.isPending
+                        : createPaymentMutation.loading
                         ? "Initializing..."
                         : createPaymentMutation.error?.response?.status === 429
                         ? "Rate Limited - Try Later"

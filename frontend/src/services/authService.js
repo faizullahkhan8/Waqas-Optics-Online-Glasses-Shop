@@ -38,6 +38,12 @@ export const authApi = {
         return data;
     },
 
+    // get addresses
+    getAddress: async () => {
+        const { data } = await api.get("/auth/address");
+        return data;
+    },
+
     // delete address
     deleteAddress: async (addressId) => {
         const { data } = await api.delete(`/auth/address/${addressId}`);

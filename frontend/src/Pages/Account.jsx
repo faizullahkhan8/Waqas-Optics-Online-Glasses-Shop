@@ -97,15 +97,13 @@ export default function AccountPage() {
                                     </nav>
                                     <Button
                                         className="w-full bg-red-600 text-white hover:bg-red-700"
-                                        onClick={() => {
-                                            logout.mutate(undefined, {
-                                                onSuccess: () => {
-                                                    dispatch(clearUser());
-                                                },
-                                                onError: () => {
-                                                    dispatch(clearUser());
-                                                },
-                                            });
+                                        onClick={async () => {
+                                            try {
+                                                await logout.logout();
+                                                dispatch(clearUser());
+                                            } catch {
+                                                dispatch(clearUser());
+                                            }
                                         }}
                                     >
                                         Logout

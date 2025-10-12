@@ -8,7 +8,6 @@ import Container from "../components/UI/Container";
 import Button from "../components/UI/Button";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
-import toast from "react-hot-toast";
 
 export default function RegisterPage() {
     const dispatch = useDispatch();
@@ -19,21 +18,18 @@ export default function RegisterPage() {
         password: "",
     });
     const navigate = useNavigate();
-    const registerMutation = useRegister();
+    const { register, loading } = useRegister();
 
-    function submit(e) {
+    async function submit(e) {
         e.preventDefault();
-        registerMutation.mutate(form, {
-            onSuccess: (data) => {
-                dispatch(setUser(data.user));
-                navigate("/account");
-            },
-            onError: (err) => {
-                toast.error(
-                    err?.response?.data?.message || "Registration failed"
-                );
-            },
-        });
+        try {
+            const data = await register(form);
+            dispatch(setUser(data.user));
+            navigate("/account");
+        } catch (error) {
+            // Error handling is already done in the hook
+            console.error("Registration failed:", error);
+        }
     }
     return (
         <main>
@@ -132,8 +128,9 @@ export default function RegisterPage() {
                                 <Button
                                     className="bg-black text-white"
                                     type="submit"
+                                    disabled={loading}
                                 >
-                                    Register
+                                    {loading ? "Registering..." : "Register"}
                                 </Button>
                             </form>
                             <p className="mt-4 text-center text-gray-600">

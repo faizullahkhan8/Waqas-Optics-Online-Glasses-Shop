@@ -7,9 +7,9 @@ import { useWishlist } from "../hooks/useWishlist";
 import { useDispatch } from "react-redux";
 
 export default function WishlistPage() {
-    const { data: wishlistData, isLoading } = useWishlist();
+    const { data: wishlistData, loading } = useWishlist();
     const dispatch = useDispatch();
-    const wishlist = wishlistData?.items || wishlistData || [];
+    const wishlist = wishlistData?.wishlist?.items || wishlistData || [];
     dispatch({
         type: "wishlist/setWishlist",
         payload: wishlist.map((item) => item.product),
@@ -31,7 +31,7 @@ export default function WishlistPage() {
                             All your favorite products in one place
                         </p>
                     </div>
-                    {isLoading ? (
+                    {loading ? (
                         <div className="max-w-xl mx-auto bg-white rounded-xl shadow-sm p-10 text-center">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
                             <h2 className="text-xl font-semibold text-gray-900 mb-2">

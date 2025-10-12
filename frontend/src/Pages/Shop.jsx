@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import { useProducts, useSearchProducts } from "../hooks/useProducts";
@@ -39,7 +39,7 @@ export default function ShopPage() {
         filters.material === "all" &&
         filters.priceRange === "all";
 
-    const productsQuery = useProducts(
+    const productsResult = useProducts(
         areFiltersDefault
             ? {}
             : {
@@ -62,30 +62,39 @@ export default function ShopPage() {
               }
     );
 
-    const searchQuery = useSearchProducts(q, {
-        category: category !== "all" ? category : undefined,
-        gender: filters.gender !== "all" ? filters.gender : undefined,
-        color: filters.color !== "all" ? filters.color : undefined,
-        material: filters.material !== "all" ? filters.material : undefined,
-        minPrice:
-            filters.priceRange !== "all"
-                ? filters.priceRange.split("-")[0]
-                : undefined,
-        maxPrice:
-            filters.priceRange !== "all"
-                ? filters.priceRange.split("-")[1]
-                : undefined,
-        sort,
-    });
+    const searchResult = useSearchProducts();
+
+    // Trigger search when there's a query
+    useEffect(() => {
+        if (q && q.length > 2) {
+            searchResult.searchProducts(q, {
+                category: category !== "all" ? category : undefined,
+                gender: filters.gender !== "all" ? filters.gender : undefined,
+                color: filters.color !== "all" ? filters.color : undefined,
+                material:
+                    filters.material !== "all" ? filters.material : undefined,
+                minPrice:
+                    filters.priceRange !== "all"
+                        ? filters.priceRange.split("-")[0]
+                        : undefined,
+                maxPrice:
+                    filters.priceRange !== "all"
+                        ? filters.priceRange.split("-")[1]
+                        : undefined,
+                sort,
+            });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [q, category, JSON.stringify(filters), sort]);
 
     const filteredProducts = useMemo(() => {
         return q
-            ? searchQuery.data?.products || []
-            : productsQuery.data?.products || [];
-    }, [q, productsQuery.data, searchQuery.data]);
+            ? searchResult.data?.products || []
+            : productsResult.data?.products || [];
+    }, [q, productsResult.data, searchResult.data]);
 
-    const isLoading = q ? searchQuery.isLoading : productsQuery.isLoading;
-    const error = q ? searchQuery.error : productsQuery.error;
+    const loading = q ? searchResult.loading : productsResult.loading;
+    const error = q ? searchResult.error : productsResult.error;
 
     return (
         <main>
@@ -163,7 +172,7 @@ export default function ShopPage() {
                                 sort={sort}
                             />
                             <ShopProductGridSection
-                                isLoading={isLoading}
+                                isLoading={loading}
                                 error={error}
                                 filteredProducts={filteredProducts}
                             />

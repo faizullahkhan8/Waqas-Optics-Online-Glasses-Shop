@@ -1,92 +1,133 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useCallback, useEffect } from "react";
 import { cartApi } from "../services/cartService";
-import toast from "react-hot-toast";
-
-// Query Keys
-export const cartKeys = {
-    all: ["cart"],
-    cart: () => [...cartKeys.all, "items"],
-};
+import { toast } from "react-hot-toast";
 
 // Get cart items
 export const useCart = () => {
-    return useQuery({
-        queryKey: cartKeys.cart(),
-        queryFn: cartApi.getCart,
-        retry: false,
-        staleTime: 1000 * 60 * 2, // 2 minutes
-    });
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    const fetchCart = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const result = await cartApi.getCart();
+            setData(result);
+        } catch (err) {
+            setError(err.response?.data?.message || "Failed to fetch cart");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchCart();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    return { data, loading, error, refetch: fetchCart };
 };
 
-// Add to cart mutation
+// Add to cart
 export const useAddToCart = () => {
-    const queryClient = useQueryClient();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-    return useMutation({
-        mutationFn: cartApi.addToCart,
-        onSuccess: (data) => {
-            queryClient.invalidateQueries({ queryKey: cartKeys.cart() });
+    const addToCart = useCallback(async (productData) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await cartApi.addToCart(productData);
             toast.success(`${data.product?.title || "Item"} added to cart`);
-        },
-        onError: (error) => {
-            toast.error(
-                error.response?.data?.message || "Failed to add item to cart"
-            );
-        },
-    });
+            return data;
+        } catch (err) {
+            const errorMsg =
+                err.response?.data?.message || "Failed to add to cart";
+            setError(errorMsg);
+            toast.error(errorMsg);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    return { addToCart, loading, error };
 };
 
-// Update cart item mutation
+// Update cart item
 export const useUpdateCartItem = () => {
-    const queryClient = useQueryClient();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-    return useMutation({
-        mutationFn: ({ itemId, quantity }) =>
-            cartApi.updateCartItem(itemId, quantity),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: cartKeys.cart() });
-        },
-        onError: (error) => {
-            toast.error(
-                error.response?.data?.message || "Failed to update cart item"
-            );
-        },
-    });
+    const updateCartItem = useCallback(async ({ itemId, quantity }) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await cartApi.updateCartItem(itemId, quantity);
+            return data;
+        } catch (err) {
+            const errorMsg =
+                err.response?.data?.message || "Failed to update cart item";
+            setError(errorMsg);
+            toast.error(errorMsg);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    return { updateCartItem, loading, error };
 };
 
-// Remove from cart mutation
+// Remove from cart
 export const useRemoveFromCart = () => {
-    const queryClient = useQueryClient();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-    return useMutation({
-        mutationFn: cartApi.removeFromCart,
-        onSuccess: (data) => {
-            queryClient.invalidateQueries({ queryKey: cartKeys.cart() });
+    const removeFromCart = useCallback(async (itemId) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await cartApi.removeFromCart(itemId);
             toast.success(`${data.product?.title || "Item"} removed from cart`);
-        },
-        onError: (error) => {
-            toast.error(
-                error.response?.data?.message ||
-                    "Failed to remove item from cart"
-            );
-        },
-    });
+            return data;
+        } catch (err) {
+            const errorMsg =
+                err.response?.data?.message || "Failed to remove from cart";
+            setError(errorMsg);
+            toast.error(errorMsg);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    return { removeFromCart, loading, error };
 };
 
-// Clear cart mutation
+// Clear cart
 export const useClearCart = () => {
-    const queryClient = useQueryClient();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-    return useMutation({
-        mutationFn: cartApi.clearCart,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: cartKeys.cart() });
+    const clearCart = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await cartApi.clearCart();
             toast.success("Cart cleared successfully");
-        },
-        onError: (error) => {
-            toast.error(
-                error.response?.data?.message || "Failed to clear cart"
-            );
-        },
-    });
+            return data;
+        } catch (err) {
+            const errorMsg =
+                err.response?.data?.message || "Failed to clear cart";
+            setError(errorMsg);
+            toast.error(errorMsg);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    return { clearCart, loading, error };
 };

@@ -9,7 +9,7 @@ export default function HomePage() {
     useEffect(() => window.scrollTo(0, 0), []);
 
     // Fetch featured products from backend only
-    const { data: featuredProductsData, isLoading, error } = useProducts();
+    const { data: featuredProductsData, loading, error } = useProducts();
     const featuredProducts = featuredProductsData?.products || [];
     return (
         <main>
@@ -89,21 +89,21 @@ export default function HomePage() {
                     </div>
                     <div className="mt-12">
                         {/* Loading State */}
-                        {isLoading && (
+                        {loading && (
                             <div className="flex justify-center py-12">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
                             </div>
                         )}
 
                         {/* Error State */}
-                        {error && !isLoading && (
+                        {error && !loading && (
                             <div className="text-center py-12 text-gray-600">
                                 <p>Failed to load featured products.</p>
                             </div>
                         )}
 
                         {/* Products Grid */}
-                        {!isLoading && !error && (
+                        {!loading && !error && (
                             <ProductGrid products={featuredProducts} />
                         )}
                     </div>

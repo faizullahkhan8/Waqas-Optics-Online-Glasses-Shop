@@ -18,16 +18,16 @@ export default function CartPage() {
     const navigate = useNavigate();
     const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
 
-    // Use TanStack Query hooks
+    // API action hooks
     const { data: cartData } = useCart();
-    const updateCartItemMutation = useUpdateCartItem();
-    const removeFromCartMutation = useRemoveFromCart();
-    const clearCartMutation = useClearCart();
+    const updateCartItemAction = useUpdateCartItem();
+    const removeFromCartAction = useRemoveFromCart();
+    const clearCartAction = useClearCart();
 
     // Fetch cart from backend on mount
     useEffect(() => {
         if (cartData) {
-            // Sync Redux state with TanStack Query data
+            // Sync Redux state with backend data
             dispatch({
                 type: "cart/replaceCart",
                 payload: cartData.items || cartData,
@@ -36,21 +36,36 @@ export default function CartPage() {
     }, [cartData, dispatch]);
 
     // Update quantity in backend
-    function handleUpdateQty(id, qty) {
-        updateCartItemMutation.mutate({ itemId: id, quantity: qty });
-        dispatch(updateQty({ _id: id, qty }));
+    async function handleUpdateQty(id, qty) {
+        try {
+            await updateCartItemAction.updateCartItem({
+                itemId: id,
+                quantity: qty,
+            });
+            dispatch(updateQty({ _id: id, qty }));
+        } catch (error) {
+            console.error("Failed to update cart item:", error);
+        }
     }
 
     // Remove item in backend
-    function handleRemove(id) {
-        removeFromCartMutation.mutate(id);
-        dispatch(removeFromCart(id));
+    async function handleRemove(id) {
+        try {
+            await removeFromCartAction.removeFromCart(id);
+            dispatch(removeFromCart(id));
+        } catch (error) {
+            console.error("Failed to remove item from cart:", error);
+        }
     }
 
     // Clear cart in backend
-    function handleClearCart() {
-        clearCartMutation.mutate();
-        dispatch(clearCart());
+    async function handleClearCart() {
+        try {
+            await clearCartAction.clearCart();
+            dispatch(clearCart());
+        } catch (error) {
+            console.error("Failed to clear cart:", error);
+        }
     }
 
     return (

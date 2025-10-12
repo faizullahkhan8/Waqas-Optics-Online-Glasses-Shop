@@ -1,177 +1,297 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useCallback } from "react";
 import { authApi } from "../services/authService";
-import toast from "react-hot-toast";
-
-// Query Keys
-export const authKeys = {
-    all: ["auth"],
-    profile: () => [...authKeys.all, "profile"],
-};
+import { toast } from "react-hot-toast";
 
 // Get user profile
 export const useProfile = () => {
-    return useQuery({
-        queryKey: authKeys.profile(),
-        queryFn: authApi.getProfile,
-        retry: false,
-        staleTime: 1000 * 60 * 5, // 5 minutes
-    });
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    const fetchProfile = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const result = await authApi.getProfile();
+            setData(result);
+        } catch (err) {
+            setError(err.response?.data?.message || "Failed to fetch profile");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    return { data, loading, error, fetchProfile };
 };
 
-// Register mutation
+// Register user
 export const useRegister = () => {
-    return useMutation({
-        mutationFn: authApi.register,
-        onSuccess: (data) => {
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    const register = useCallback(async (userData) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await authApi.register(userData);
+            if (data.token) {
+                localStorage.setItem("token", data.token);
+                localStorage.setItem("user", JSON.stringify(data.user));
+            }
             toast.success("Registration successful!");
-            if (data.token) {
-                localStorage.setItem("token", data.token);
-                localStorage.setItem("user", JSON.stringify(data.user));
-            }
-        },
-        onError: (error) => {
-            toast.error(error.response?.data?.message || "Registration failed");
-        },
-    });
+            return data;
+        } catch (err) {
+            const errorMsg =
+                err.response?.data?.message || "Registration failed";
+            setError(errorMsg);
+            toast.error(errorMsg);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    return { register, loading, error };
 };
 
-// Login mutation
+// Login user
 export const useLogin = () => {
-    const queryClient = useQueryClient();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-    return useMutation({
-        mutationFn: authApi.login,
-        onSuccess: (data) => {
-            toast.success("Login successful!");
+    const login = useCallback(async (credentials) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await authApi.login(credentials);
             if (data.token) {
                 localStorage.setItem("token", data.token);
                 localStorage.setItem("user", JSON.stringify(data.user));
-                queryClient.invalidateQueries({ queryKey: authKeys.profile() });
+                window.location.reload();
             }
-        },
-        onError: (error) => {
-            toast.error(error.response?.data?.message || "Login failed");
-        },
-    });
+            toast.success("Login successful!");
+            return data;
+        } catch (err) {
+            const errorMsg = err.response?.data?.message || "Login failed";
+            setError(errorMsg);
+            toast.error(errorMsg);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    return { login, loading, error };
 };
 
-// Logout mutation
+// Logout user
 export const useLogout = () => {
-    const queryClient = useQueryClient();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-    return useMutation({
-        mutationFn: authApi.logout,
-        onSuccess: () => {
+    const logout = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            await authApi.logout();
             localStorage.removeItem("token");
             localStorage.removeItem("user");
-            queryClient.clear();
-            toast.success("Logged out successfully");
-        },
-        onError: () => {
-            // Still clear local storage even if API call fails
+            window.location.href = "/";
+            toast.success("Logged out successfully!");
+        } catch {
+            // Even if logout fails on server, clear local storage
             localStorage.removeItem("token");
             localStorage.removeItem("user");
-            queryClient.clear();
-        },
-    });
+            window.location.href = "/";
+            toast.success("Logged out successfully!");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    return { logout, loading, error };
 };
 
-// Update profile mutation
+// Update profile
 export const useUpdateProfile = () => {
-    const queryClient = useQueryClient();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-    return useMutation({
-        mutationFn: authApi.updateProfile,
-        onSuccess: (data) => {
-            queryClient.setQueryData(authKeys.profile(), data);
+    const updateProfile = useCallback(async (profileData) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await authApi.updateProfile(profileData);
+            localStorage.setItem("user", JSON.stringify(data.user));
             toast.success("Profile updated successfully");
-        },
-        onError: (error) => {
-            toast.error(
-                error.response?.data?.message || "Profile update failed"
-            );
-        },
-    });
+            return data;
+        } catch (err) {
+            const errorMsg =
+                err.response?.data?.message || "Profile update failed";
+            setError(errorMsg);
+            toast.error(errorMsg);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    return { updateProfile, loading, error };
 };
 
-// add/update address mutation
+// get addresses
+export const useGetAddress = () => {
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [addresses, setAddresses] = useState([]);
+
+    const getAddress = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await authApi.getAddress();
+            setAddresses(data.addresses);
+            return data;
+        } catch (err) {
+            const errorMsg =
+                err.response?.data?.message || "Failed to load addresses";
+            setError(errorMsg);
+            toast.error(errorMsg);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    return { getAddress, loading, error, addresses };
+};
+
+// Update address
 export const useUpdateAddress = () => {
-    const queryClient = useQueryClient();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-    return useMutation({
-        mutationFn: authApi.updateAddress,
-        onSuccess: (data) => {
-            queryClient.setQueryData(authKeys.profile(), data);
+    const updateAddress = useCallback(async (addressData) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await authApi.updateAddress(addressData);
             toast.success("Address updated successfully");
-        },
-        onError: (error) => {
-            toast.error(
-                error.response?.data?.message || "Address update failed"
-            );
-        },
-    });
+            return data;
+        } catch (err) {
+            const errorMsg =
+                err.response?.data?.message || "Address update failed";
+            setError(errorMsg);
+            toast.error(errorMsg);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    return { updateAddress, loading, error };
 };
 
-// delete address mutation
+// Delete address
 export const useDeleteAddress = () => {
-    const queryClient = useQueryClient();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-    return useMutation({
-        mutationFn: authApi.deleteAddress,
-        onSuccess: (data) => {
-            queryClient.setQueryData(authKeys.profile(), data);
+    const deleteAddress = useCallback(async (addressId) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await authApi.deleteAddress(addressId);
             toast.success("Address deleted successfully");
-        },
-        onError: (error) => {
-            toast.error(
-                error.response?.data?.message || "Address deletion failed"
-            );
-        },
-    });
+            return data;
+        } catch (err) {
+            const errorMsg =
+                err.response?.data?.message || "Address deletion failed";
+            setError(errorMsg);
+            toast.error(errorMsg);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    return { deleteAddress, loading, error };
 };
 
-// Change password mutation
+// Change password
 export const useChangePassword = () => {
-    return useMutation({
-        mutationFn: authApi.changePassword,
-        onSuccess: () => {
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    const changePassword = useCallback(async (passwordData) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await authApi.changePassword(passwordData);
             toast.success("Password changed successfully");
-        },
-        onError: (error) => {
-            toast.error(
-                error.response?.data?.message || "Password change failed"
-            );
-        },
-    });
+            return data;
+        } catch (err) {
+            const errorMsg =
+                err.response?.data?.message || "Password change failed";
+            setError(errorMsg);
+            toast.error(errorMsg);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    return { changePassword, loading, error };
 };
 
-// Forgot password mutation
+// Forgot password
 export const useForgotPassword = () => {
-    return useMutation({
-        mutationFn: authApi.forgotPassword,
-        onSuccess: () => {
-            toast.success("Password reset email sent");
-        },
-        onError: (error) => {
-            toast.error(
-                error.response?.data?.message || "Failed to send reset email"
-            );
-        },
-    });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    const forgotPassword = useCallback(async (email) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await authApi.forgotPassword(email);
+            toast.success("Password reset email sent!");
+            return data;
+        } catch (err) {
+            const errorMsg =
+                err.response?.data?.message || "Failed to send reset email";
+            setError(errorMsg);
+            toast.error(errorMsg);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    return { forgotPassword, loading, error };
 };
 
-// Reset password mutation
+// Reset password
 export const useResetPassword = () => {
-    return useMutation({
-        mutationFn: ({ token, password }) =>
-            authApi.resetPassword(token, password),
-        onSuccess: () => {
-            toast.success("Password reset successfully");
-        },
-        onError: (error) => {
-            toast.error(
-                error.response?.data?.message || "Password reset failed"
-            );
-        },
-    });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    const resetPassword = useCallback(async ({ token, password }) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await authApi.resetPassword(token, password);
+            toast.success("Password reset successful!");
+            return data;
+        } catch (err) {
+            const errorMsg =
+                err.response?.data?.message || "Password reset failed";
+            setError(errorMsg);
+            toast.error(errorMsg);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    return { resetPassword, loading, error };
 };

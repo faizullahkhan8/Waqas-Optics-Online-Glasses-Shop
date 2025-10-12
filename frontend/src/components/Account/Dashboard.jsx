@@ -1,22 +1,37 @@
-import { useSelector } from "react-redux";
 import { useUserDashboardStats } from "../../hooks/useAdditional";
 import { useOrders } from "../../hooks/useOrders";
-import { useState } from "react";
+import { useProfile } from "../../hooks/useAuth";
+import { useEffect } from "react";
 
 export default function Dashboard() {
-    const user = useSelector((state) => state.user);
-    const [orders, setOrders] = useState([]);
+    const { data: profileData, fetchProfile } = useProfile();
+    const {
+        data: dashboardStatsData,
+        loading: statsLoading,
+        error: statsError,
+    } = useUserDashboardStats();
+    const {
+        data: ordersData,
+        loading: ordersLoading,
+        error: ordersError,
+    } = useOrders();
 
-    const dashboardStats = useUserDashboardStats();
-    const ordersData = useOrders();
+    // Fetch profile data on mount
+    useEffect(() => {
+        fetchProfile();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-    // Sync orders data when fetched
-    if (ordersData?.data?.orders && ordersData?.data?.orders !== orders) {
-        setOrders(ordersData?.data?.orders);
-    }
+    const user = profileData?.user || {};
+    const orders = ordersData?.orders || [];
+
+    // Debug logging
+    console.log("Profile data:", profileData);
+    console.log("Dashboard stats data:", dashboardStatsData);
+    console.log("Orders data:", ordersData);
 
     // Loading and error states
-    if (dashboardStats.isLoading) {
+    if (statsLoading || ordersLoading) {
         return (
             <div className="flex items-center justify-center h-64">
                 <span className="text-gray-500 text-lg">
@@ -26,19 +41,27 @@ export default function Dashboard() {
         );
     }
 
-    if (dashboardStats.isError) {
+    if (statsError || ordersError) {
         return (
             <div className="flex items-center justify-center h-64">
-                <span className="text-red-500 text-lg">
-                    Failed to load dashboard stats.
-                </span>
+                <div className="text-center">
+                    <span className="text-red-500 text-lg block mb-2">
+                        Failed to load dashboard data.
+                    </span>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                    >
+                        Retry
+                    </button>
+                </div>
             </div>
         );
     }
 
-    const ordersCount = dashboardStats.data?.stats.orders ?? 0;
-    const reviewsCount = dashboardStats.data?.stats.reviews ?? 0;
-    const wishlistCount = dashboardStats.data?.stats.wishlist ?? 0;
+    const ordersCount = dashboardStatsData?.stats?.orders ?? 0;
+    const reviewsCount = dashboardStatsData?.stats?.reviews ?? 0;
+    const wishlistCount = dashboardStatsData?.stats?.wishlist ?? 0;
 
     return (
         <div className="space-y-8">

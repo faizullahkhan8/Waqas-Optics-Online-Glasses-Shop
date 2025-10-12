@@ -115,6 +115,16 @@ export const updateProfile = async (req, res, next) => {
     }
 };
 
+// Get addresses => /api/v1/auth/address
+export const getAddress = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.session.userId);
+        res.status(200).json({ success: true, addresses: user.addresses });
+    } catch (error) {
+        next(error);
+    }
+};
+
 // Add/Update address => /api/v1/auth/address
 export const updateAddress = async (req, res, next) => {
     try {

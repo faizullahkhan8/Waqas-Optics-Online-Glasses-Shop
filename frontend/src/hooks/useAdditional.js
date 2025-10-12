@@ -1,16 +1,30 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState, useCallback, useEffect } from "react";
 import { getUserDashboardStats } from "../services/additional";
-import toast from "react-hot-toast";
 
 export const useUserDashboardStats = () => {
-    return useQuery({
-        queryKey: ["userDashboardStats"],
-        queryFn: getUserDashboardStats,
-        onError: (error) => {
-            toast.error(
-                error?.response?.data?.message ||
-                    "Failed to load dashboard stats"
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    const fetchUserDashboardStats = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const result = await getUserDashboardStats();
+            setData(result);
+        } catch (err) {
+            setError(
+                err.response?.data?.message || "Failed to fetch dashboard stats"
             );
-        },
-    });
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchUserDashboardStats();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    return { data, loading, error, refetch: fetchUserDashboardStats };
 };

@@ -18,14 +18,14 @@ export default function ProductDetailPage() {
     const [quantity, setQuantity] = useState(1);
     const wishlist = useSelector((state) => state?.wishlist?.items || []);
 
-    // Use React Query hooks for data fetching
-    const { data: productData, isLoading, error } = useProduct(id);
+    // Fetch product data
+    const { data: productData, loading, error } = useProduct(id);
     const product = productData?.product;
 
-    // Use TanStack Query hooks for mutations
-    const addToCartMutation = useAddToCart();
-    const addToWishlistMutation = useAddToWishlist();
-    const removeFromWishlistMutation = useRemoveFromWishlist();
+    // API action hooks
+    const addToCartAction = useAddToCart();
+    const addToWishlistAction = useAddToWishlist();
+    const removeFromWishlistAction = useRemoveFromWishlist();
 
     // Get related products if product category is available
     const { data: relatedProductsData } = useProductsByCategory(
@@ -37,27 +37,35 @@ export default function ProductDetailPage() {
 
     const isInWishlist = wishlist?.some((item) => item._id === product?._id);
 
-    if (isLoading) return <div className="text-center py-20">Loading...</div>;
+    if (loading) return <div className="text-center py-20">Loading...</div>;
     if (error || !product) return <NotFoundPage />;
 
-    const handleAddToCart = () => {
-        addToCartMutation.mutate({
-            productId: product._id,
-            quantity: quantity,
-        });
-        // Update Redux state
-        dispatch(addToCart({ ...product, qty: quantity }));
+    const handleAddToCart = async () => {
+        try {
+            await addToCartAction.addToCart({
+                productId: product._id,
+                quantity: quantity,
+            });
+            // Update Redux state
+            dispatch(addToCart({ ...product, qty: quantity }));
+        } catch (error) {
+            console.error("Failed to add to cart:", error);
+        }
     };
 
     const handleToggleWishlist = async () => {
         if (!product) return;
 
-        if (isInWishlist) {
-            removeFromWishlistMutation.mutate(product._id);
-            dispatch(removeFromWishlist(product._id));
-        } else {
-            addToWishlistMutation.mutate(product._id);
-            dispatch(addToWishlist(product));
+        try {
+            if (isInWishlist) {
+                await removeFromWishlistAction.removeFromWishlist(product._id);
+                dispatch(removeFromWishlist(product._id));
+            } else {
+                await addToWishlistAction.addToWishlist(product._id);
+                dispatch(addToWishlist(product));
+            }
+        } catch (error) {
+            console.error("Failed to update wishlist:", error);
         }
     };
 

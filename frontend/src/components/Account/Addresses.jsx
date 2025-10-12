@@ -1,43 +1,47 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     useDeleteAddress,
-    useProfile,
+    useGetAddress,
     useUpdateAddress,
 } from "../../hooks/useAuth";
-import { useQueryClient } from "@tanstack/react-query";
 
 export default function Addresses() {
     const [showAddForm, setShowAddForm] = useState(false);
     const [editingAddress, setEditingAddress] = useState(null);
-    const queryClient = useQueryClient();
 
-    // Custom hook for updating address
-    const { mutate: updateAddress } = useUpdateAddress({
-        onSuccess: () => {
-            queryClient.invalidateQueries(["profile"]);
-        },
-    });
-    const { mutate: deleteAddress } = useDeleteAddress({
-        onSuccess: () => {
-            queryClient.invalidateQueries(["profile"]);
-        },
-    });
+    // Custom hooks for updating and deleting addresses
+    const { updateAddress } = useUpdateAddress();
+    const { deleteAddress } = useDeleteAddress();
+    const { getAddress, addresses } = useGetAddress();
 
-    const { data: profileData } = useProfile();
-    const addresses = profileData?.user?.addresses || [];
+    useEffect(() => {
+        getAddress();
+    }, [getAddress]);
 
-    const handleAddAddress = (newAddress) => {
-        updateAddress(newAddress); // Call the mutation to update address in backend
-        setShowAddForm(false);
+    const handleAddAddress = async (newAddress) => {
+        try {
+            await updateAddress(newAddress); // Call the API to update address in backend
+            setShowAddForm(false);
+        } catch (error) {
+            console.error("Failed to add address:", error);
+        }
     };
 
-    const handleEditAddress = (updatedAddress) => {
-        updateAddress(updatedAddress); // Call the mutation to update address in backend
-        setEditingAddress(null);
+    const handleEditAddress = async (updatedAddress) => {
+        try {
+            await updateAddress(updatedAddress); // Call the API to update address in backend
+            setEditingAddress(null);
+        } catch (error) {
+            console.error("Failed to update address:", error);
+        }
     };
 
-    const handleDeleteAddress = (addressId) => {
-        deleteAddress(addressId); // Call the mutation to delete address in backend
+    const handleDeleteAddress = async (addressId) => {
+        try {
+            await deleteAddress(addressId); // Call the API to delete address in backend
+        } catch (error) {
+            console.error("Failed to delete address:", error);
+        }
     };
 
     return (

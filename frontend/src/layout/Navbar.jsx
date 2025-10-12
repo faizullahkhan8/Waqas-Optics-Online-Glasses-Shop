@@ -49,7 +49,7 @@ export default function Navbar() {
 
     const handleLogout = async () => {
         try {
-            await logout.mutateAsync();
+            await logout.logout();
             dispatch(clearUser());
             setUserMenuOpen(false);
         } catch (error) {

@@ -16,7 +16,7 @@ export default function CheckoutSuccessPage() {
     const hasVerified = useRef(false);
 
     const sessionId = searchParams.get("session_id");
-    const verifySessionMutation = useVerifyCheckoutSession();
+    const verifySessionAction = useVerifyCheckoutSession();
 
     useEffect(() => {
         if (!sessionId) {
@@ -32,7 +32,7 @@ export default function CheckoutSuccessPage() {
 
         (async () => {
             try {
-                const data = await verifySessionMutation.mutateAsync(sessionId);
+                const data = await verifySessionAction.verifySession(sessionId);
                 dispatch(clearCart());
                 navigate(`/thank-you?order=${data.orderId}`);
             } catch (err) {
@@ -44,7 +44,7 @@ export default function CheckoutSuccessPage() {
                 setIsVerifying(false);
             }
         })();
-    }, [sessionId, navigate, dispatch, verifySessionMutation]);
+    }, [sessionId, navigate, dispatch, verifySessionAction]);
 
     if (isVerifying) {
         return (

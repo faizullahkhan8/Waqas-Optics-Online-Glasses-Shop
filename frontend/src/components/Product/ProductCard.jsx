@@ -18,21 +18,31 @@ export default function ProductCard({ product }) {
     const removeFromWishlistMutation = useRemoveFromWishlist();
     const addToCartMutation = useAddToCart();
 
-    const handleAddToCart = () => {
-        addToCartMutation.mutate({
-            productId: product._id,
-            quantity: 1,
-        });
-        dispatch(addToCart({ ...product, qty: 1 }));
+    const handleAddToCart = async () => {
+        try {
+            await addToCartMutation.addToCart({
+                productId: product._id,
+                quantity: 1,
+            });
+            dispatch(addToCart({ ...product, qty: 1 }));
+        } catch (error) {
+            console.error("Failed to add to cart:", error);
+        }
     };
 
     const handleToggleWishlist = async () => {
-        if (isInWishlist) {
-            removeFromWishlistMutation.mutate(product?._id);
-            dispatch(removeFromWishlist(product?._id));
-        } else {
-            addToWishlistMutation.mutate(product?._id);
-            dispatch(addToWishlist(product));
+        try {
+            if (isInWishlist) {
+                await removeFromWishlistMutation.removeFromWishlist(
+                    product?._id
+                );
+                dispatch(removeFromWishlist(product?._id));
+            } else {
+                await addToWishlistMutation.addToWishlist(product?._id);
+                dispatch(addToWishlist(product));
+            }
+        } catch (error) {
+            console.error("Failed to update wishlist:", error);
         }
     };
 

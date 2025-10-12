@@ -11,6 +11,7 @@ import {
     updateProfile,
     updateAddress,
     deleteAddress,
+    getAddress,
 } from "../controllers/authController.js";
 
 import { isAuthenticatedUser } from "../middleware/auth.js";
@@ -32,6 +33,7 @@ router.get("/me", isAuthenticatedUser, getUserProfile);
 router.put("/password/update", isAuthenticatedUser, updatePassword);
 router.put("/me/update", isAuthenticatedUser, updateProfile);
 router.post("/address", isAuthenticatedUser, updateAddress);
+router.get("/address", isAuthenticatedUser, getAddress);
 router.delete("/address/:id", isAuthenticatedUser, deleteAddress);
 
 export default router;

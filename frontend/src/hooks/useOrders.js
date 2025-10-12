@@ -1,91 +1,137 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useCallback, useEffect } from "react";
 import { orderApi } from "../services/orderService";
-import toast from "react-hot-toast";
-
-// Query Keys
-export const orderKeys = {
-    all: ["orders"],
-    lists: () => [...orderKeys.all, "list"],
-    details: () => [...orderKeys.all, "detail"],
-    detail: (id) => [...orderKeys.details(), id],
-};
+import { toast } from "react-hot-toast";
 
 // Get user's orders
 export const useOrders = () => {
-    return useQuery({
-        queryKey: orderKeys.lists(),
-        queryFn: orderApi.getOrders,
-        staleTime: 1000 * 60 * 5, // 5 minutes
-    });
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    const fetchOrders = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const result = await orderApi.getOrders();
+            setData(result);
+        } catch (err) {
+            setError(err.response?.data?.message || "Failed to fetch orders");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchOrders();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    return { data, loading, error, refetch: fetchOrders };
 };
 
 // Get single order
 export const useOrder = (orderId) => {
-    return useQuery({
-        queryKey: orderKeys.detail(orderId),
-        queryFn: () => orderApi.getOrder(orderId),
-        enabled: !!orderId,
-    });
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    const fetchOrder = useCallback(async () => {
+        if (!orderId) return;
+
+        setLoading(true);
+        setError(null);
+        try {
+            const result = await orderApi.getOrder(orderId);
+            setData(result);
+        } catch (err) {
+            setError(err.response?.data?.message || "Failed to fetch order");
+        } finally {
+            setLoading(false);
+        }
+    }, [orderId]);
+
+    useEffect(() => {
+        fetchOrder();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [orderId]);
+
+    return { data, loading, error, refetch: fetchOrder };
 };
 
-// Create order mutation
+// Create order
 export const useCreateOrder = () => {
-    const queryClient = useQueryClient();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-    return useMutation({
-        mutationFn: orderApi.createOrder,
-        onSuccess: (data) => {
-            queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+    const createOrder = useCallback(async (orderData) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await orderApi.createOrder(orderData);
             toast.success("Order placed successfully!");
             return data;
-        },
-        onError: (error) => {
-            toast.error(
-                error.response?.data?.message || "Failed to place order"
-            );
-        },
-    });
+        } catch (err) {
+            const errorMsg =
+                err.response?.data?.message || "Failed to create order";
+            setError(errorMsg);
+            toast.error(errorMsg);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    return { createOrder, loading, error };
 };
 
-// Update order status mutation (admin only)
+// Update order status (admin only)
 export const useUpdateOrderStatus = () => {
-    const queryClient = useQueryClient();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-    return useMutation({
-        mutationFn: ({ orderId, status }) =>
-            orderApi.updateOrderStatus(orderId, status),
-        onSuccess: (_, { orderId }) => {
-            queryClient.invalidateQueries({
-                queryKey: orderKeys.detail(orderId),
-            });
-            queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+    const updateOrderStatus = useCallback(async ({ orderId, status }) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await orderApi.updateOrderStatus(orderId, status);
             toast.success("Order status updated successfully");
-        },
-        onError: (error) => {
-            toast.error(
-                error.response?.data?.message || "Failed to update order status"
-            );
-        },
-    });
+            return data;
+        } catch (err) {
+            const errorMsg =
+                err.response?.data?.message || "Failed to update order status";
+            setError(errorMsg);
+            toast.error(errorMsg);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    return { updateOrderStatus, loading, error };
 };
 
-// Cancel order mutation
+// Cancel order
 export const useCancelOrder = () => {
-    const queryClient = useQueryClient();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-    return useMutation({
-        mutationFn: orderApi.cancelOrder,
-        onSuccess: (_, orderId) => {
-            queryClient.invalidateQueries({
-                queryKey: orderKeys.detail(orderId),
-            });
-            queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+    const cancelOrder = useCallback(async (orderId) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await orderApi.cancelOrder(orderId);
             toast.success("Order cancelled successfully");
-        },
-        onError: (error) => {
-            toast.error(
-                error.response?.data?.message || "Failed to cancel order"
-            );
-        },
-    });
+            return data;
+        } catch (err) {
+            const errorMsg =
+                err.response?.data?.message || "Failed to cancel order";
+            setError(errorMsg);
+            toast.error(errorMsg);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    return { cancelOrder, loading, error };
 };

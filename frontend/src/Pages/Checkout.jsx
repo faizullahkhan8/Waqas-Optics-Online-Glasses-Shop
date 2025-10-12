@@ -44,9 +44,9 @@ export default function CheckoutPage() {
         return cart.reduce((s, i) => s + i.price * i.qty, 0);
     }, [cart]);
 
-    // Use TanStack Query hooks
-    const createOrderMutation = useCreateOrder();
-    const createCheckoutSessionMutation = useCreateCheckoutSession();
+    // API action hooks
+    const createOrderAction = useCreateOrder();
+    const createCheckoutSessionAction = useCreateCheckoutSession();
 
     function validate() {
         const e = {};
@@ -63,7 +63,7 @@ export default function CheckoutPage() {
         return Object.keys(e).length === 0;
     }
 
-    function placeOrder() {
+    async function placeOrder() {
         if (!validate()) return;
 
         if (payment === "card") {
@@ -81,18 +81,18 @@ export default function CheckoutPage() {
                 },
             };
 
-            createCheckoutSessionMutation.mutate(orderData, {
-                onSuccess: (res) => {
-                    // Redirect to Stripe checkout page
-                    window.location.href = res.url;
-                },
-                onError: (err) => {
-                    setStripeError(
-                        err?.response?.data?.message ||
-                            "Failed to create checkout session"
-                    );
-                },
-            });
+            try {
+                const res = await createCheckoutSessionAction.createSession(
+                    orderData
+                );
+                // Redirect to Stripe checkout page
+                window.location.href = res.url;
+            } catch (err) {
+                setStripeError(
+                    err?.response?.data?.message ||
+                        "Failed to create checkout session"
+                );
+            }
             return;
         }
 
@@ -113,21 +113,17 @@ export default function CheckoutPage() {
                 status: "pending",
             },
         };
-        createOrderMutation.mutate(orderData, {
-            onSuccess: (res) => {
-                dispatch(clearCart());
-                navigate(
-                    `/thank-you?order=${
-                        res.orderId || res.order?._id || res._id
-                    }`
-                );
-            },
-            onError: (err) => {
-                setErrors({
-                    submit: err?.response?.data?.message || "Order failed",
-                });
-            },
-        });
+        try {
+            const res = await createOrderAction.createOrder(orderData);
+            dispatch(clearCart());
+            navigate(
+                `/thank-you?order=${res.orderId || res.order?._id || res._id}`
+            );
+        } catch (err) {
+            setErrors({
+                submit: err?.response?.data?.message || "Order failed",
+            });
+        }
     }
 
     return (
@@ -501,10 +497,10 @@ export default function CheckoutPage() {
                                                     placeOrder();
                                                 }}
                                                 disabled={
-                                                    createCheckoutSessionMutation.isPending
+                                                    createCheckoutSessionAction.loading
                                                 }
                                             >
-                                                {createCheckoutSessionMutation.isPending
+                                                {createCheckoutSessionAction.loading
                                                     ? "Redirecting to Payment..."
                                                     : "Pay with Stripe"}
                                             </Button>

@@ -1,11 +1,11 @@
 import { useOrders } from "../../hooks/useOrders";
 
 export default function Orders() {
-    const { data: orders, isLoading } = useOrders();
+    const { data: orders, loading, error } = useOrders();
 
     console.log(orders);
 
-    if (isLoading) {
+    if (loading) {
         return (
             <div className="bg-white rounded-xl shadow-sm p-6">
                 <div className="animate-pulse">
@@ -22,13 +22,27 @@ export default function Orders() {
             </div>
         );
     }
+
+    if (error) {
+        return (
+            <div className="bg-white rounded-xl shadow-sm p-6">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <h3 className="text-red-800 font-medium mb-2">
+                        Error Loading Orders
+                    </h3>
+                    <p className="text-red-600 text-sm">{error}</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="bg-white rounded-xl shadow-sm p-6">
             <h2 className="text-xl font-serif font-bold text-gray-900 mb-6">
                 My Orders
             </h2>
 
-            {orders.orders &&
+            {orders?.orders &&
             (Array.isArray(orders.orders) ? orders.orders.length : 0) > 0 ? (
                 <div className="space-y-4">
                     {orders.orders.map((order) => (

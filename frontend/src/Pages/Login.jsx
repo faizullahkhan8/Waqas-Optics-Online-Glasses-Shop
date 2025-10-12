@@ -6,30 +6,24 @@ import { useLogin } from "../hooks/useAuth";
 import { Helmet } from "react-helmet";
 import Container from "../components/UI/Container";
 import Button from "../components/UI/Button";
-import toast from "react-hot-toast";
 
 export default function LoginPage() {
     const dispatch = useDispatch();
     const [form, setForm] = useState({ email: "", password: "" });
     const navigate = useNavigate();
 
-    const loginMutation = useLogin();
+    const { login, loading } = useLogin();
 
-    function submit(e) {
+    async function submit(e) {
         e.preventDefault();
-        // Login existing user
-        loginMutation.mutate(form, {
-            onSuccess: (data) => {
-                dispatch(setUser(data.user));
-                navigate("/account");
-            },
-            onError: (error) => {
-                toast.error(
-                    error.response.data.message ||
-                        "Login failed please try again!"
-                );
-            },
-        });
+        try {
+            const data = await login(form);
+            dispatch(setUser(data.user));
+            navigate("/account");
+        } catch (error) {
+            // Error handling is already done in the hook
+            console.error("Login failed:", error);
+        }
     }
     return (
         <main>
@@ -87,8 +81,9 @@ export default function LoginPage() {
                                 <Button
                                     className="bg-black text-white"
                                     type="submit"
+                                    disabled={loading}
                                 >
-                                    Login
+                                    {loading ? "Logging in..." : "Login"}
                                 </Button>
                             </form>
                             <p className="mt-4 text-center text-gray-600">
